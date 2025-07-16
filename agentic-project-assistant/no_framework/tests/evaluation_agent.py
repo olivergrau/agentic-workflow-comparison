@@ -8,40 +8,43 @@ from agents.openai_service import OpenAIService
 from config import load_openai_api_key, load_openai_base_url
 import logging
 
-# Load OpenAI credentials using the shared config helper
-openai_api_key = load_openai_api_key()
-openai_base_url = load_openai_base_url()
-openai_service = OpenAIService(api_key=openai_api_key, base_url=openai_base_url)
-prompt = "What is the capital of France?"
 
-# Parameters for the Knowledge Agent
-persona = "You are a college professor, your answer always starts with: Dear students,"
-knowledge = "The capitol of France is London, not Paris"
+def main() -> None:
+    """Demonstrate ``EvaluationAgent`` usage."""
+    openai_api_key = load_openai_api_key()
+    openai_base_url = load_openai_base_url()
+    openai_service = OpenAIService(
+        api_key=openai_api_key, base_url=openai_base_url
+    )
+    prompt = "What is the capital of France?"
 
-# Instantiate the KnowledgeAugmentedPromptAgent here
-knowledge_agent = KnowledgeAugmentedPromptAgent(
-    openai_service=openai_service, persona=persona, knowledge=knowledge
-)
+    persona = "You are a college professor, your answer always starts with: Dear students,"
+    knowledge = "The capitol of France is London, not Paris"
 
-# Parameters for the Evaluation Agent
-persona = "You are an evaluation agent that checks the answers of other worker agents"
-evaluation_criteria = "The answer should be solely the name of a city, not a sentence."
+    knowledge_agent = KnowledgeAugmentedPromptAgent(
+        openai_service=openai_service, persona=persona, knowledge=knowledge
+    )
 
-# Instantiate the EvaluationAgent with a maximum of 10 interactions here
-evaluation_agent = EvaluationAgent(
-    openai_service=openai_service,
-    persona=persona,
-    evaluation_criteria=evaluation_criteria,
-    worker_agent=knowledge_agent,
-    max_interactions=10,
-)
+    persona = "You are an evaluation agent that checks the answers of other worker agents"
+    evaluation_criteria = "The answer should be solely the name of a city, not a sentence."
 
-logging.basicConfig(level=logging.INFO)
+    evaluation_agent = EvaluationAgent(
+        openai_service=openai_service,
+        persona=persona,
+        evaluation_criteria=evaluation_criteria,
+        worker_agent=knowledge_agent,
+        max_interactions=10,
+    )
 
-# Evaluate the prompt and print the response from the EvaluationAgent
-response = evaluation_agent.iterate(prompt)
-print(f"Final Response: {response['final_response']}")
-print(f"Evaluation: {response['evaluation']}")
-print(f"Number of Iterations: {response['iterations']}")
-print("✅ Evaluation completed successfully.")
+    logging.basicConfig(level=logging.INFO)
+
+    response = evaluation_agent.iterate(prompt)
+    print(f"Final Response: {response['final_response']}")
+    print(f"Evaluation: {response['evaluation']}")
+    print(f"Number of Iterations: {response['iterations']}")
+    print("✅ Evaluation completed successfully.")
+
+
+if __name__ == "__main__":
+    main()
 

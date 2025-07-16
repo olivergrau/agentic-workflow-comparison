@@ -2,16 +2,21 @@ import sys
 import os
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
+# Import agents and config helpers
 from agents.base_agents import ActionPlanningAgent
 from agents.openai_service import OpenAIService
 from config import load_openai_api_key, load_openai_base_url
 
-# Load OpenAI credentials using the shared config helper
-openai_api_key = load_openai_api_key()
-openai_base_url = load_openai_base_url()
-openai_service = OpenAIService(api_key=openai_api_key, base_url=openai_base_url)
 
-knowledge = """
+def main():
+    """Run a sample invocation of ``ActionPlanningAgent``."""
+    openai_api_key = load_openai_api_key()
+    openai_base_url = load_openai_base_url()
+    openai_service = OpenAIService(
+        api_key=openai_api_key, base_url=openai_base_url
+    )
+
+    knowledge = """
 # Fried Egg
 1. Heat pan with oil or butter
 2. Crack egg into pan
@@ -39,14 +44,16 @@ knowledge = """
 7. Peel and serve
 """
 
-# Instantiate the ActionPlanningAgent, passing the openai_api_key and the knowledge variable
-action_planning_agent = ActionPlanningAgent(
-    openai_service=openai_service,
-    knowledge=knowledge
-)
+    action_planning_agent = ActionPlanningAgent(
+        openai_service=openai_service,
+        knowledge=knowledge,
+    )
 
-# Print the agent's response to the following prompt: "One morning I wanted to have scrambled eggs"
-prompt = "One morning I wanted to have scrambled eggs"
-response = action_planning_agent.extract_steps_from_prompt(prompt)
-print(f"Action Planning Response: {response}")
+    prompt = "One morning I wanted to have scrambled eggs"
+    response = action_planning_agent.extract_steps_from_prompt(prompt)
+    print(f"Action Planning Response: {response}")
+
+
+if __name__ == "__main__":
+    main()
 
