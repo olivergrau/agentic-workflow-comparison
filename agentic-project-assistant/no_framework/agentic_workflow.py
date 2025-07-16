@@ -1,8 +1,14 @@
 # agentic_workflow.py
 
 # Import the following agents: ActionPlanningAgent, KnowledgeAugmentedPromptAgent, EvaluationAgent, RoutingAgent from the workflow_agents.base_agents module
-from agents.base_agents import ActionPlanningAgent, KnowledgeAugmentedPromptAgent, EvaluationAgent, RoutingAgent
+from agents.base_agents import (
+    ActionPlanningAgent,
+    KnowledgeAugmentedPromptAgent,
+    EvaluationAgent,
+    RoutingAgent,
+)
 from agents.openai_service import OpenAIService
+import logging
 
 import os
 from dotenv import load_dotenv
@@ -10,6 +16,8 @@ from dotenv import load_dotenv
 # Load the OpenAI key into a variable called openai_api_key
 load_dotenv()  # Load environment variables from .env file
 openai_api_key = os.getenv("OPENAI_API_KEY")
+
+logging.basicConfig(level=logging.INFO)
 
 # Create a single OpenAIService instance to share across agents
 openai_service = OpenAIService(api_key=openai_api_key)
@@ -20,7 +28,7 @@ product_spec_path = "Product-Spec-Email-Router.txt"
 if not os.path.exists(product_spec_path):
     raise FileNotFoundError(f"Product spec file not found at {product_spec_path}")
 
-with open(product_spec_path, 'r') as file:
+with open(product_spec_path, "r") as file:
     product_spec = file.read()
 
 # Instantiate all the agents
@@ -38,8 +46,7 @@ knowledge_action_planning = (
 )
 # Instantiate an action_planning_agent using the 'knowledge_action_planning'
 action_planning_agent = ActionPlanningAgent(
-    knowledge=knowledge_action_planning,
-    openai_service=openai_service
+    knowledge=knowledge_action_planning, openai_service=openai_service
 )
 
 # Product Manager - Knowledge Augmented Prompt Agent
@@ -47,20 +54,22 @@ persona_product_manager = "You are a Product Manager, you are responsible for de
 knowledge_product_manager = (
     "Stories are defined by writing sentences with a persona, an action, and a desired outcome. "
     "The sentences always start with: As a "
-    "Write several stories for the product spec below, where the personas are the different users of the product. "    
+    "Write several stories for the product spec below, where the personas are the different users of the product. "
     f"Here is the product spec: {product_spec}"
 )
 # Instantiate a product_manager_knowledge_agent using 'persona_product_manager' and the completed 'knowledge_product_manager'
 product_manager_knowledge_agent = KnowledgeAugmentedPromptAgent(
     persona=persona_product_manager,
     knowledge=knowledge_product_manager,
-    openai_service=openai_service
+    openai_service=openai_service,
 )
 
 # Product Manager - Evaluation Agent
 # Define the persona and evaluation criteria for a Product Manager evaluation agent and instantiate it as product_manager_evaluation_agent. This agent will evaluate the product_manager_knowledge_agent.
 # The evaluation_criteria should specify the expected structure for user stories (e.g., "As a [type of user], I want [an action or feature] so that [benefit/value].").
-persona_product_manager_eval = "You are an evaluation agent that checks the answers of other worker agents."
+persona_product_manager_eval = (
+    "You are an evaluation agent that checks the answers of other worker agents."
+)
 evaluation_criteria_product_manager = (
     "The answer should be user stories that follow this structure: "
     "As a [type of user], I want [an action or feature] so that [benefit/value]. "
@@ -71,7 +80,7 @@ product_manager_evaluation_agent = EvaluationAgent(
     persona=persona_product_manager_eval,
     evaluation_criteria=evaluation_criteria_product_manager,
     worker_agent=product_manager_knowledge_agent,
-    openai_service=openai_service
+    openai_service=openai_service,
 )
 
 # Program Manager - Knowledge Augmented Prompt Agent
@@ -81,11 +90,13 @@ knowledge_program_manager = "Features of a product are defined by organizing sim
 program_manager_knowledge_agent = KnowledgeAugmentedPromptAgent(
     persona=persona_program_manager,
     knowledge=knowledge_program_manager,
-    openai_service=openai_service
+    openai_service=openai_service,
 )
 
 # Program Manager - Evaluation Agent
-persona_program_manager_eval = "You are an evaluation agent that checks the answers of other worker agents."
+persona_program_manager_eval = (
+    "You are an evaluation agent that checks the answers of other worker agents."
+)
 
 # Instantiate a program_manager_evaluation_agent using 'persona_program_manager_eval' and the evaluation criteria below.
 #                      "The answer should be product features that follow the following structure: " \
@@ -104,7 +115,7 @@ program_manager_evaluation_agent = EvaluationAgent(
         "User Benefit: How this feature creates value for the user"
     ),
     worker_agent=program_manager_knowledge_agent,
-    openai_service=openai_service
+    openai_service=openai_service,
 )
 
 # Development Engineer - Knowledge Augmented Prompt Agent
@@ -114,11 +125,13 @@ knowledge_dev_engineer = "Development tasks are defined by identifying what need
 development_engineer_knowledge_agent = KnowledgeAugmentedPromptAgent(
     persona=persona_dev_engineer,
     knowledge=knowledge_dev_engineer,
-    openai_service=openai_service
+    openai_service=openai_service,
 )
 
 # Development Engineer - Evaluation Agent
-persona_dev_engineer_eval = "You are an evaluation agent that checks the answers of other worker agents."
+persona_dev_engineer_eval = (
+    "You are an evaluation agent that checks the answers of other worker agents."
+)
 # Instantiate a development_engineer_evaluation_agent using 'persona_dev_engineer_eval' and the evaluation criteria below.
 #                      "The answer should be tasks following this exact structure: " \
 #                      "Task ID: A unique identifier for tracking purposes\n" \
@@ -142,7 +155,7 @@ development_engineer_evaluation_agent = EvaluationAgent(
         "Dependencies: Any tasks that must be completed first"
     ),
     worker_agent=development_engineer_knowledge_agent,
-    openai_service=openai_service
+    openai_service=openai_service,
 )
 
 
@@ -153,21 +166,22 @@ routing_agent = RoutingAgent(
         {
             "name": "Product Manager ",
             "description": "Responsible for defining product personas and user stories only.",
-            "func": "placeholder"
+            "func": "placeholder",
         },
         {
             "name": "Program Manager",
             "description": "A Program Manager, who is responsible for defining the features for a product.",
-            "func": "placeholder"
+            "func": "placeholder",
         },
         {
             "name": "Development Engineer",
             "description": "A Development Engineer, who is responsible for defining the development tasks for a product.",
-            "func": "placeholder"
-        }
+            "func": "placeholder",
+        },
     ],
-    openai_service=openai_service
+    openai_service=openai_service,
 )
+
 
 # Job function persona support functions
 # Define the support functions for the routes of the routing agent (e.g., product_manager_support_function, program_manager_support_function, development_engineer_support_function).
@@ -178,22 +192,25 @@ routing_agent = RoutingAgent(
 #   4. Return the final validated response.
 def product_manager_support_function(query):
     response = product_manager_knowledge_agent.respond(query)
-    evaluation = product_manager_evaluation_agent.evaluate(response)
+    evaluation = product_manager_evaluation_agent.iterate(response)
     return evaluation
+
 
 def program_manager_support_function(query):
     response = program_manager_knowledge_agent.respond(query)
-    evaluation = program_manager_evaluation_agent.evaluate(response)
+    evaluation = program_manager_evaluation_agent.iterate(response)
     return evaluation
+
 
 def development_engineer_support_function(query):
     response = development_engineer_knowledge_agent.respond(query)
-    evaluation = development_engineer_evaluation_agent.evaluate(response)
+    evaluation = development_engineer_evaluation_agent.iterate(response)
     return evaluation
 
-routing_agent.agents[0]['func'] = product_manager_support_function
-routing_agent.agents[1]['func'] = program_manager_support_function
-routing_agent.agents[2]['func'] = development_engineer_support_function
+
+routing_agent.agents[0]["func"] = product_manager_support_function
+routing_agent.agents[1]["func"] = program_manager_support_function
+routing_agent.agents[2]["func"] = development_engineer_support_function
 
 # Run the workflow
 
@@ -230,17 +247,17 @@ for i, step in enumerate(extracted_steps):
     print(f"Full prompt for step {i+1}: {full_prompt}")
     print(f"Executing step {i+1}: {step}")
     result = routing_agent.route(full_prompt)
-    
+
     # Store the result
     completed_steps.append(result)
-    
+
     # Update context with the final response from this step
     if isinstance(result, dict) and "final_response" in result:
         context_prompt += "\n" + result["final_response"]
     else:
         # Optional safety check
         context_prompt += "\n" + str(result)
-    
+
     print(f"Result of step '{step}': {result}\n")
 
 print("Workflow completed successfully.")

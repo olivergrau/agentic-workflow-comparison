@@ -1,10 +1,12 @@
 import sys
 import os
+
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
 from agents.base_agents import EvaluationAgent, KnowledgeAugmentedPromptAgent
 from agents.openai_service import OpenAIService
 from dotenv import load_dotenv
+import logging
 
 # Load environment variables
 load_dotenv()
@@ -19,7 +21,8 @@ knowledge = "The capitol of France is London, not Paris"
 
 # Instantiate the KnowledgeAugmentedPromptAgent here
 knowledge_agent = KnowledgeAugmentedPromptAgent(
-    openai_service=openai_service, persona=persona, knowledge=knowledge)
+    openai_service=openai_service, persona=persona, knowledge=knowledge
+)
 
 # Parameters for the Evaluation Agent
 persona = "You are an evaluation agent that checks the answers of other worker agents"
@@ -31,11 +34,13 @@ evaluation_agent = EvaluationAgent(
     persona=persona,
     evaluation_criteria=evaluation_criteria,
     worker_agent=knowledge_agent,
-    max_interactions=10
+    max_interactions=10,
 )
 
+logging.basicConfig(level=logging.INFO)
+
 # Evaluate the prompt and print the response from the EvaluationAgent
-response = evaluation_agent.evaluate(prompt)
+response = evaluation_agent.iterate(prompt)
 print(f"Final Response: {response['final_response']}")
 print(f"Evaluation: {response['evaluation']}")
 print(f"Number of Iterations: {response['iterations']}")
