@@ -4,7 +4,7 @@ import pandas as pd
 import uuid
 from datetime import datetime
 from dataclasses import dataclass, field
-from typing import Callable, List
+from typing import Any, Callable, List, Protocol
 from utils.logging_config import logger
 from utils.text_chunker import TextChunker
 from utils.embedding_store import EmbeddingStore
@@ -22,6 +22,14 @@ class OpenAIModel(str, Enum):
 MODEL = OpenAIModel.GPT_35_TURBO  # Default model for this project
 
 
+class RespondAgent(Protocol):
+    """Protocol representing an object that can respond to a prompt."""
+
+    def respond(self, prompt: str) -> str:
+        """Return a textual response to the given prompt."""
+        ...
+
+
 @dataclass
 class Route:
     """Represents a routing option for the :class:`RoutingAgent`."""
@@ -34,13 +42,14 @@ class Route:
 
 # DirectPromptAgent class definition
 class DirectPromptAgent:
+    """Agent that directly forwards a prompt to the OpenAI API."""
 
-    def __init__(self, openai_service: OpenAIService):
-        """Initialize the agent with a shared OpenAI service."""
+    def __init__(self, openai_service: OpenAIService) -> None:
+        """Store a shared :class:`OpenAIService` instance."""
         self.openai_service = openai_service
 
-    def respond(self, prompt):
-        # Generate a response using the OpenAI API through the service
+    def respond(self, prompt: str) -> str:
+        """Return the completion for ``prompt`` using the configured model."""
         response = self.openai_service.chat(
             model=MODEL,
             messages=[
@@ -48,20 +57,20 @@ class DirectPromptAgent:
             ],
             temperature=0,
         )
-        # Return only the textual content of the response (not the full JSON response).
         return response.choices[0].message.content.strip()
 
 
 # AugmentedPromptAgent class definition
 class AugmentedPromptAgent:
-    def __init__(self, openai_service: OpenAIService, persona):
-        """Initialize the agent with given attributes."""
+    """Agent that injects a persona before forwarding prompts."""
+
+    def __init__(self, openai_service: OpenAIService, persona: str) -> None:
+        """Store the persona and OpenAI service used for requests."""
         self.persona = persona
         self.openai_service = openai_service
 
-    def respond(self, input_text):
-        """Generate a response using OpenAI API."""
-        # Declare a variable 'response' that calls OpenAI's API for a chat completion.
+    def respond(self, input_text: str) -> str:
+        """Generate a completion for ``input_text`` using the persona."""
         response = self.openai_service.chat(
             model=MODEL,
             messages=[
@@ -76,21 +85,22 @@ class AugmentedPromptAgent:
             temperature=0,
         )
 
-        # Return only the textual content of the response, not the full JSON payload.
         return response.choices[0].message.content.strip()
 
 
 # KnowledgeAugmentedPromptAgent class definition
 class KnowledgeAugmentedPromptAgent:
-    def __init__(self, openai_service: OpenAIService, persona, knowledge):
-        """Initialize the agent with provided attributes."""
+    """Agent that prepends domain knowledge to each prompt."""
+
+    def __init__(self, openai_service: OpenAIService, persona: str, knowledge: str) -> None:
+        """Store persona, knowledge base and the service to use."""
 
         self.persona = persona
         self.knowledge = knowledge
         self.openai_service = openai_service
 
-    def respond(self, input_text):
-        """Generate a response using the OpenAI API."""
+    def respond(self, input_text: str) -> str:
+        """Generate a completion constrained by the agent's knowledge base."""
         response = self.openai_service.chat(
             model=MODEL,
             messages=[
@@ -128,12 +138,12 @@ class RAGKnowledgePromptAgent:
     def __init__(
         self,
         openai_service: OpenAIService,
-        persona,
-        chunk_size=2000,
-        chunk_overlap=100,
+        persona: str,
+        chunk_size: int = 2000,
+        chunk_overlap: int = 100,
         chunker: TextChunker | None = None,
         store: EmbeddingStore | None = None,
-    ):
+    ) -> None:
         """
         Initializes the RAGKnowledgePromptAgent with API credentials and configuration settings.
 
@@ -151,7 +161,7 @@ class RAGKnowledgePromptAgent:
         filename = f"{datetime.now().strftime('%Y%m%d_%H%M%S')}_{uuid.uuid4().hex[:8]}"
         self.store = store or EmbeddingStore(filename)
 
-    def get_embedding(self, text):
+    def get_embedding(self, text: str) -> List[float]:
         """
         Fetches the embedding vector for given text using OpenAI's embedding API.
 
@@ -166,7 +176,7 @@ class RAGKnowledgePromptAgent:
         )
         return response.data[0].embedding
 
-    def calculate_similarity(self, vector_one, vector_two):
+    def calculate_similarity(self, vector_one: List[float], vector_two: List[float]) -> float:
         """
         Calculates cosine similarity between two vectors.
 
@@ -188,20 +198,20 @@ class RAGKnowledgePromptAgent:
     # this caused the loop to never exit.
     # I replaced it with a more robust chunking logic that respects natural breaks in the text
     # and ensures that chunks are created without overlap issues.
-    def chunk_text(self, text):
+    def chunk_text(self, text: str) -> List[dict]:
         """Split text into chunks and store them using :class:`EmbeddingStore`."""
         chunks = self.chunker.chunk(text)
         self.store.save_chunks(chunks)
         return chunks
 
-    def calculate_embeddings(self):
+    def calculate_embeddings(self) -> pd.DataFrame:
         """Calculate embeddings for stored chunks and persist them."""
         df = self.store.load_chunks()
         df["embeddings"] = df["text"].apply(self.get_embedding)
         self.store.save_embeddings(df)
         return df
 
-    def find_prompt_in_knowledge(self, prompt):
+    def find_prompt_in_knowledge(self, prompt: str) -> str:
         """
         Finds and responds to a prompt based on similarity with embedded knowledge.
 
@@ -238,24 +248,25 @@ class RAGKnowledgePromptAgent:
 
 
 class EvaluationAgent:
+    """Agent that evaluates responses from another worker agent."""
 
     def __init__(
         self,
         openai_service: OpenAIService,
-        persona,
-        evaluation_criteria,
-        worker_agent,
-        max_interactions=10,
-    ):
-        """Initialize the EvaluationAgent with the shared OpenAI service."""
+        persona: str,
+        evaluation_criteria: str,
+        worker_agent: RespondAgent,
+        max_interactions: int = 10,
+    ) -> None:
+        """Initialize evaluator attributes and store the worker agent."""
         self.openai_service = openai_service
         self.persona = persona
         self.evaluation_criteria = evaluation_criteria
         self.worker_agent = worker_agent
         self.max_interactions = max_interactions
 
-    def evaluate_once(self, prompt: str):
-        """Run a single evaluation iteration."""
+    def evaluate_once(self, prompt: str) -> tuple[str, str]:
+        """Evaluate the worker agent's answer to ``prompt`` once."""
         logger.info("Worker agent generating response")
         response_from_worker = self.worker_agent.respond(prompt)
 
@@ -287,8 +298,8 @@ class EvaluationAgent:
         evaluation = response.choices[0].message.content.strip()
         return response_from_worker, evaluation
 
-    def iterate(self, initial_prompt: str):
-        """Run evaluation loop until criteria are met or max interactions reached."""
+    def iterate(self, initial_prompt: str) -> dict[str, Any]:
+        """Loop until the worker's answer meets the evaluation criteria."""
         prompt_to_evaluate = initial_prompt
 
         for i in range(self.max_interactions):
@@ -338,15 +349,16 @@ class EvaluationAgent:
             "iterations": i + 1,
         }
 
-    def evaluate(self, initial_prompt: str):
+    def evaluate(self, initial_prompt: str) -> dict[str, Any]:
         """Backward compatible wrapper around :py:meth:`iterate`."""
         return self.iterate(initial_prompt)
 
 
 class RoutingAgent:
+    """Select the best agent for a prompt based on description embeddings."""
 
-    def __init__(self, openai_service: OpenAIService, agents: List[Route]):
-        """Initialize the routing agent and pre-compute route embeddings."""
+    def __init__(self, openai_service: OpenAIService, agents: List[Route]) -> None:
+        """Initialize and embed all available routes."""
         self.openai_service = openai_service
         self.agents: List[Route] = []
         for agent in agents:
@@ -361,8 +373,9 @@ class RoutingAgent:
             route.embedding = self.get_embedding(route.description)
             self.agents.append(route)
 
-    def get_embedding(self, text):
-        # Write code to calculate the embedding of the text using the text-embedding-3-large model
+    def get_embedding(self, text: str) -> List[float]:
+        """Return the embedding vector for ``text``."""
+        # Calculate the embedding of the text using the text-embedding-3-large model
         response = self.openai_service.embed(
             model="text-embedding-3-large", input=text, encoding_format="float"
         )
@@ -371,8 +384,8 @@ class RoutingAgent:
         return embedding
 
     # Define a method to route user prompts to the appropriate agent
-    def route(self, user_input):
-        """Route the prompt to the most similar agent."""
+    def route(self, user_input: str) -> Any:
+        """Route ``user_input`` to the agent with the most similar description."""
         input_emb = self.get_embedding(user_input)
         best_agent: Route | None = None
         best_score = -1.0
@@ -404,12 +417,15 @@ class RoutingAgent:
 
 
 class ActionPlanningAgent:
+    """Agent that extracts an ordered action plan from a prompt."""
 
-    def __init__(self, openai_service: OpenAIService, knowledge):
+    def __init__(self, openai_service: OpenAIService, knowledge: str) -> None:
+        """Store the knowledge base used for planning."""
         self.openai_service = openai_service
         self.knowledge = knowledge
 
-    def extract_steps_from_prompt(self, prompt):
+    def extract_steps_from_prompt(self, prompt: str) -> List[str]:
+        """Return a list of numbered steps derived from ``prompt``."""
 
         # Call the OpenAI API to get a response from the "gpt-3.5-turbo" model.
         # Provide the following system prompt along with the user's prompt:
