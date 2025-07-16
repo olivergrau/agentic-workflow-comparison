@@ -6,6 +6,7 @@ from agents.base_agents import (
     KnowledgeAugmentedPromptAgent,
     EvaluationAgent,
     RoutingAgent,
+    Route,
 )
 from agents.openai_service import OpenAIService
 from utils.logging_config import logger
@@ -157,30 +158,6 @@ development_engineer_evaluation_agent = EvaluationAgent(
 )
 
 
-# Routing Agent
-# Instantiate a routing_agent. You will need to define a list of agent dictionaries (routes) for Product Manager, Program Manager, and Development Engineer. Each dictionary should contain 'name', 'description', and 'func' (linking to a support function). Assign this list to the routing_agent's 'agents' attribute.
-routing_agent = RoutingAgent(
-    agents=[
-        {
-            "name": "Product Manager ",
-            "description": "Responsible for defining product personas and user stories only.",
-            "func": "placeholder",
-        },
-        {
-            "name": "Program Manager",
-            "description": "A Program Manager, who is responsible for defining the features for a product.",
-            "func": "placeholder",
-        },
-        {
-            "name": "Development Engineer",
-            "description": "A Development Engineer, who is responsible for defining the development tasks for a product.",
-            "func": "placeholder",
-        },
-    ],
-    openai_service=openai_service,
-)
-
-
 # Job function persona support functions
 # Define the support functions for the routes of the routing agent (e.g., product_manager_support_function, program_manager_support_function, development_engineer_support_function).
 # Each support function should:
@@ -206,9 +183,28 @@ def development_engineer_support_function(query):
     return evaluation
 
 
-routing_agent.agents[0]["func"] = product_manager_support_function
-routing_agent.agents[1]["func"] = program_manager_support_function
-routing_agent.agents[2]["func"] = development_engineer_support_function
+# Define the routes and instantiate the routing agent
+routes = [
+    Route(
+        name="Product Manager",
+        description="Responsible for defining product personas and user stories only.",
+        func=product_manager_support_function,
+    ),
+    Route(
+        name="Program Manager",
+        description="A Program Manager, who is responsible for defining the features for a product.",
+        func=program_manager_support_function,
+    ),
+    Route(
+        name="Development Engineer",
+        description="A Development Engineer, who is responsible for defining the development tasks for a product.",
+        func=development_engineer_support_function,
+    ),
+]
+
+routing_agent = RoutingAgent(agents=routes, openai_service=openai_service)
+
+
 
 # Run the workflow
 
