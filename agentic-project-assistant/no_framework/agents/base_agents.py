@@ -5,9 +5,7 @@ import re
 import csv
 import uuid
 from datetime import datetime
-import logging
-
-logger = logging.getLogger(__name__)
+from utils.logging_config import logger
 
 from enum import Enum
 
@@ -418,13 +416,16 @@ class RoutingAgent:
             agent_desc = agent["description"]
             agent_emb = self.get_embedding(agent_desc)
             if agent_emb is None:
-                print(f"Warning: Agent '{agent['name']}' has no embedding. Skipping.")
+                logger.warning(
+                    "Warning: Agent '%s' has no embedding. Skipping.",
+                    agent["name"],
+                )
                 continue
 
             similarity = np.dot(input_emb, agent_emb) / (
                 np.linalg.norm(input_emb) * np.linalg.norm(agent_emb)
             )
-            print(similarity)
+            logger.debug(similarity)
 
             # Add logic to select the best agent based on the similarity score between the user prompt and the agent descriptions
             if similarity > best_score:
@@ -434,7 +435,11 @@ class RoutingAgent:
         if best_agent is None:
             return "Sorry, no suitable agent could be selected."
 
-        print(f"[Router] Best agent: {best_agent['name']} (score={best_score:.3f})")
+        logger.info(
+            "[Router] Best agent: %s (score=%.3f)",
+            best_agent["name"],
+            best_score,
+        )
         return best_agent["func"](user_input)
 
 

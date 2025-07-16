@@ -8,7 +8,7 @@ from agents.base_agents import (
     RoutingAgent,
 )
 from agents.openai_service import OpenAIService
-import logging
+from utils.logging_config import logger
 
 import os
 from dotenv import load_dotenv
@@ -16,8 +16,6 @@ from dotenv import load_dotenv
 # Load the OpenAI key into a variable called openai_api_key
 load_dotenv()  # Load environment variables from .env file
 openai_api_key = os.getenv("OPENAI_API_KEY")
-
-logging.basicConfig(level=logging.INFO)
 
 # Create a single OpenAIService instance to share across agents
 openai_service = OpenAIService(api_key=openai_api_key)
@@ -214,14 +212,14 @@ routing_agent.agents[2]["func"] = development_engineer_support_function
 
 # Run the workflow
 
-print("\n*** Workflow execution started ***\n")
+logger.info("\n*** Workflow execution started ***\n")
 # Workflow Prompt
 # ****
 workflow_prompt = "What would the development tasks for this product be?"
 # ****
-print(f"Task to complete in this workflow, workflow prompt = {workflow_prompt}")
+logger.info("Task to complete in this workflow, workflow prompt = %s", workflow_prompt)
 
-print("\nDefining workflow steps from the workflow prompt")
+logger.info("\nDefining workflow steps from the workflow prompt")
 # Implement the workflow.
 #   1. Use the 'action_planning_agent' to extract steps from the 'workflow_prompt'.
 #   2. Initialize an empty list to store 'completed_steps'.
@@ -234,8 +232,8 @@ extracted_steps = action_planning_agent.extract_steps_from_prompt(workflow_promp
 completed_steps = []
 
 # print out completed steps
-print(f"Extracted steps from the workflow prompt: {extracted_steps}\n")
-print("Executing each step in the workflow...")
+logger.info("Extracted steps from the workflow prompt: %s\n", extracted_steps)
+logger.info("Executing each step in the workflow...")
 
 # Start with an empty context
 context_prompt = ""
@@ -244,8 +242,8 @@ context_prompt = ""
 for i, step in enumerate(extracted_steps):
     # Combine previous context with the current step
     full_prompt = context_prompt + f"\n{step}".strip()
-    print(f"Full prompt for step {i+1}: {full_prompt}")
-    print(f"Executing step {i+1}: {step}")
+    logger.debug("Full prompt for step %d: %s", i + 1, full_prompt)
+    logger.info("Executing step %d: %s", i + 1, step)
     result = routing_agent.route(full_prompt)
 
     # Store the result
@@ -258,15 +256,15 @@ for i, step in enumerate(extracted_steps):
         # Optional safety check
         context_prompt += "\n" + str(result)
 
-    print(f"Result of step '{step}': {result}\n")
+    logger.info("Result of step '%s': %s", step, result)
 
-print("Workflow completed successfully.")
+logger.info("Workflow completed successfully.")
 
 # Print complete workflow results
-print("\n*** Workflow Results ***")
+logger.info("\n*** Workflow Results ***")
 
 for i, step in enumerate(completed_steps, start=1):
-    print(f"Step {i}: {step}")
+    logger.info("Step %d: %s", i, step)
 
-print(f"Final output of the workflow: {completed_steps[-1]}")
-print("\n*** Workflow execution finished ***\n")
+logger.info("Final output of the workflow: %s", completed_steps[-1])
+logger.info("\n*** Workflow execution finished ***\n")

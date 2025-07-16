@@ -38,16 +38,12 @@ with open(output_file, "w", encoding="utf-8") as out_file:
                 capture_output=True,
                 text=True,
                 cwd=test_dir,
-                check=False  # don't raise exceptions on non-zero exit
+                check=False,  # don't raise exceptions on non-zero exit
             )
 
-            print(result.stdout)
-            out_file.write(result.stdout)
-
-            if result.stderr:
-                print("⚠️ stderr:")
-                print(result.stderr)
-                out_file.write("\n[stderr]\n" + result.stderr)
+            output = result.stdout + result.stderr
+            print(output)
+            out_file.write(output)
 
         except Exception as e:
             error_msg = f"\n[ERROR] Could not run {script}: {e}\n"
