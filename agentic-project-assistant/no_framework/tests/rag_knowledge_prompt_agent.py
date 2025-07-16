@@ -3,6 +3,7 @@ import os
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
 from agents.base_agents import RAGKnowledgePromptAgent
+from agents.openai_service import OpenAIService
 from dotenv import load_dotenv
 
 # Load environment variables from .env file
@@ -10,6 +11,7 @@ load_dotenv()
 
 # Define the parameters for the agent
 openai_api_key = os.getenv("OPENAI_API_KEY")
+openai_service = OpenAIService(api_key=openai_api_key)
 
 chunk_size = 1000  # Define the size of each chunk
 
@@ -17,7 +19,7 @@ persona = "You are a college professor, your answer always starts with: Dear stu
 
 # Instantiate RAGKnowledgePromptAgent
 RAG_knowledge_prompt_agent = RAGKnowledgePromptAgent(
-    openai_api_key=openai_api_key, persona=persona, chunk_size=chunk_size)
+    openai_service=openai_service, persona=persona, chunk_size=chunk_size)
 
 knowledge_text = """
 In the historic city of Boston, Clara, a marine biologist and science communicator, began each morning analyzing sonar data to track whale migration patterns along the Atlantic coast.

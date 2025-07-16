@@ -3,12 +3,14 @@ import os
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
 from agents.base_agents import EvaluationAgent, KnowledgeAugmentedPromptAgent
+from agents.openai_service import OpenAIService
 from dotenv import load_dotenv
 
 # Load environment variables
 load_dotenv()
 
 openai_api_key = os.getenv("OPENAI_API_KEY")
+openai_service = OpenAIService(api_key=openai_api_key)
 prompt = "What is the capital of France?"
 
 # Parameters for the Knowledge Agent
@@ -17,7 +19,7 @@ knowledge = "The capitol of France is London, not Paris"
 
 # Instantiate the KnowledgeAugmentedPromptAgent here
 knowledge_agent = KnowledgeAugmentedPromptAgent(
-    openai_api_key=openai_api_key, persona=persona, knowledge=knowledge)
+    openai_service=openai_service, persona=persona, knowledge=knowledge)
 
 # Parameters for the Evaluation Agent
 persona = "You are an evaluation agent that checks the answers of other worker agents"
@@ -25,7 +27,7 @@ evaluation_criteria = "The answer should be solely the name of a city, not a sen
 
 # Instantiate the EvaluationAgent with a maximum of 10 interactions here
 evaluation_agent = EvaluationAgent(
-    openai_api_key=openai_api_key,
+    openai_service=openai_service,
     persona=persona,
     evaluation_criteria=evaluation_criteria,
     worker_agent=knowledge_agent,
