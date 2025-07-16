@@ -5,6 +5,8 @@ import re
 import csv
 import uuid
 from datetime import datetime
+from dataclasses import dataclass, field
+from typing import Callable, List
 from utils.logging_config import logger
 
 from enum import Enum
@@ -18,6 +20,16 @@ class OpenAIModel(str, Enum):
 
 
 MODEL = OpenAIModel.GPT_35_TURBO  # Default model for this project
+
+
+@dataclass
+class Route:
+    """Represents a routing option for the :class:`RoutingAgent`."""
+
+    name: str
+    description: str
+    func: Callable[[str], str]
+    embedding: List[float] = field(default_factory=list)
 
 
 # DirectPromptAgent class definition
@@ -383,11 +395,21 @@ class EvaluationAgent:
 
 class RoutingAgent:
 
-    def __init__(self, openai_service: OpenAIService, agents):
-        """Initialize the routing agent with the shared OpenAI service."""
+    def __init__(self, openai_service: OpenAIService, agents: List[Route]):
+        """Initialize the routing agent and pre-compute route embeddings."""
         self.openai_service = openai_service
-        # Define an attribute to hold the agents, call it agents
-        self.agents = agents
+        self.agents: List[Route] = []
+        for agent in agents:
+            if isinstance(agent, dict):
+                route = Route(
+                    name=agent["name"],
+                    description=agent["description"],
+                    func=agent["func"],
+                )
+            else:
+                route = agent
+            route.embedding = self.get_embedding(route.description)
+            self.agents.append(route)
 
     def get_embedding(self, text):
         # Write code to calculate the embedding of the text using the text-embedding-3-large model
@@ -400,26 +422,15 @@ class RoutingAgent:
 
     # Define a method to route user prompts to the appropriate agent
     def route(self, user_input):
-        """Routes the user input to the most suitable agent based on similarity of descriptions.
-        Args:
-            user_input (str): The input prompt from the user.
-        Returns:
-            str: The response from the best matching agent.
-        """
-        # Compute the embedding of the user input prompt
+        """Route the prompt to the most similar agent."""
         input_emb = self.get_embedding(user_input)
-        best_agent = None
-        best_score = -1
+        best_agent: Route | None = None
+        best_score = -1.0
 
         for agent in self.agents:
-            # Compute the embedding of the agent description
-            agent_desc = agent["description"]
-            agent_emb = self.get_embedding(agent_desc)
-            if agent_emb is None:
-                logger.warning(
-                    "Warning: Agent '%s' has no embedding. Skipping.",
-                    agent["name"],
-                )
+            agent_emb = np.array(agent.embedding)
+            if agent_emb.size == 0:
+                logger.warning("Warning: Agent '%s' has no embedding. Skipping.", agent.name)
                 continue
 
             similarity = np.dot(input_emb, agent_emb) / (
@@ -427,7 +438,6 @@ class RoutingAgent:
             )
             logger.debug(similarity)
 
-            # Add logic to select the best agent based on the similarity score between the user prompt and the agent descriptions
             if similarity > best_score:
                 best_score = similarity
                 best_agent = agent
@@ -437,10 +447,10 @@ class RoutingAgent:
 
         logger.info(
             "[Router] Best agent: %s (score=%.3f)",
-            best_agent["name"],
+            best_agent.name,
             best_score,
         )
-        return best_agent["func"](user_input)
+        return best_agent.func(user_input)
 
 
 class ActionPlanningAgent:
