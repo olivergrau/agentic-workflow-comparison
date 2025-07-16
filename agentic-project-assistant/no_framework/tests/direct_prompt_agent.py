@@ -6,15 +6,12 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")
 
 from agents.base_agents import DirectPromptAgent
 from agents.openai_service import OpenAIService
-import os
-from dotenv import load_dotenv
+from config import load_openai_api_key, load_openai_base_url
 
-# Load environment variables from .env file
-load_dotenv()
-
-# Load the OpenAI API key from the environment variables
-openai_api_key = os.getenv("OPENAI_API_KEY")
-openai_service = OpenAIService(api_key=openai_api_key)
+# Load OpenAI credentials using the shared config helper
+openai_api_key = load_openai_api_key()
+openai_base_url = load_openai_base_url()
+openai_service = OpenAIService(api_key=openai_api_key, base_url=openai_base_url)
 
 prompt = "What is the Capital of France?"
 

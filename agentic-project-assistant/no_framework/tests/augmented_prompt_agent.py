@@ -5,14 +5,12 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")
 # Import the AugmentedPromptAgent class
 from agents.base_agents import AugmentedPromptAgent
 from agents.openai_service import OpenAIService
-from dotenv import load_dotenv
+from config import load_openai_api_key, load_openai_base_url
 
-# Load environment variables from .env file
-load_dotenv()
-
-# Retrieve OpenAI API key from environment variables
-openai_api_key = os.getenv("OPENAI_API_KEY")
-openai_service = OpenAIService(api_key=openai_api_key)
+# Load OpenAI credentials using the shared config helper
+openai_api_key = load_openai_api_key()
+openai_base_url = load_openai_base_url()
+openai_service = OpenAIService(api_key=openai_api_key, base_url=openai_base_url)
 
 prompt = "What is the capital of France?"
 persona = "You are a college professor; your answers always start with: 'Dear students,'"
@@ -34,3 +32,4 @@ print(augmented_agent_response)
 print("The agent's response is expected to be a formal answer, such as 'Dear students, the capital of France is Paris.'")
 print("This is because the agent's persona is set to that of a college professor, which influences")
 print("the style and tone of the response.")  # This line is added to complete the comment
+

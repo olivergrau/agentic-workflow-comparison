@@ -5,14 +5,13 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")
 
 from agents.base_agents import EvaluationAgent, KnowledgeAugmentedPromptAgent
 from agents.openai_service import OpenAIService
-from dotenv import load_dotenv
+from config import load_openai_api_key, load_openai_base_url
 import logging
 
-# Load environment variables
-load_dotenv()
-
-openai_api_key = os.getenv("OPENAI_API_KEY")
-openai_service = OpenAIService(api_key=openai_api_key)
+# Load OpenAI credentials using the shared config helper
+openai_api_key = load_openai_api_key()
+openai_base_url = load_openai_base_url()
+openai_service = OpenAIService(api_key=openai_api_key, base_url=openai_base_url)
 prompt = "What is the capital of France?"
 
 # Parameters for the Knowledge Agent
@@ -45,3 +44,4 @@ print(f"Final Response: {response['final_response']}")
 print(f"Evaluation: {response['evaluation']}")
 print(f"Number of Iterations: {response['iterations']}")
 print("✅ Evaluation completed successfully.")
+

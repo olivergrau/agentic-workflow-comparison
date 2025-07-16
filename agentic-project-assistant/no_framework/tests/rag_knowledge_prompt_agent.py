@@ -4,14 +4,12 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")
 
 from agents.base_agents import RAGKnowledgePromptAgent
 from agents.openai_service import OpenAIService
-from dotenv import load_dotenv
+from config import load_openai_api_key, load_openai_base_url
 
-# Load environment variables from .env file
-load_dotenv()
-
-# Define the parameters for the agent
-openai_api_key = os.getenv("OPENAI_API_KEY")
-openai_service = OpenAIService(api_key=openai_api_key)
+# Load OpenAI credentials using the shared config helper
+openai_api_key = load_openai_api_key()
+openai_base_url = load_openai_base_url()
+openai_service = OpenAIService(api_key=openai_api_key, base_url=openai_base_url)
 
 chunk_size = 1000  # Define the size of each chunk
 
