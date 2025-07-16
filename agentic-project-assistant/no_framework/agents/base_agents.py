@@ -1,4 +1,4 @@
-from openai import OpenAI
+from .openai_service import OpenAIService
 import numpy as np
 import pandas as pd
 import re
@@ -18,18 +18,14 @@ MODEL = OpenAIModel.GPT_35_TURBO # Default model for this project
 
 # DirectPromptAgent class definition
 class DirectPromptAgent:
-    
-    def __init__(self, openai_api_key):
-        # Initialize the agent        
-        self.openai_api_key = openai_api_key
+
+    def __init__(self, openai_service: OpenAIService):
+        """Initialize the agent with a shared OpenAI service."""
+        self.openai_service = openai_service
 
     def respond(self, prompt):
-        # Generate a response using the OpenAI API
-        client = OpenAI(
-            api_key=self.openai_api_key,
-            base_url="https://openai.vocareum.com/v1"
-        )
-        response = client.chat.completions.create(
+        # Generate a response using the OpenAI API through the service
+        response = self.openai_service.chat(
             model=MODEL,
             messages=[
                 {"role": "user", "content": prompt},
@@ -42,20 +38,15 @@ class DirectPromptAgent:
     
 # AugmentedPromptAgent class definition
 class AugmentedPromptAgent:
-    def __init__(self, openai_api_key, persona):
+    def __init__(self, openai_service: OpenAIService, persona):
         """Initialize the agent with given attributes."""
         self.persona = persona
-        self.openai_api_key = openai_api_key
+        self.openai_service = openai_service
 
     def respond(self, input_text):
         """Generate a response using OpenAI API."""
-        client = OpenAI(
-            api_key=self.openai_api_key,
-            base_url="https://openai.vocareum.com/v1"
-        )
-
         # Declare a variable 'response' that calls OpenAI's API for a chat completion.
-        response = client.chat.completions.create(
+        response = self.openai_service.chat(
             model=MODEL,
             messages=[
                 # Add a system prompt instructing the agent to assume the defined persona and explicitly forget previous context.
@@ -71,20 +62,16 @@ class AugmentedPromptAgent:
 
 # KnowledgeAugmentedPromptAgent class definition
 class KnowledgeAugmentedPromptAgent:
-    def __init__(self, openai_api_key, persona, knowledge):
+    def __init__(self, openai_service: OpenAIService, persona, knowledge):
         """Initialize the agent with provided attributes."""
 
-        self.persona = persona        
+        self.persona = persona
         self.knowledge = knowledge
-        self.openai_api_key = openai_api_key
+        self.openai_service = openai_service
 
     def respond(self, input_text):
         """Generate a response using the OpenAI API."""
-        client = OpenAI(
-            api_key=self.openai_api_key,
-            base_url="https://openai.vocareum.com/v1"
-        )
-        response = client.chat.completions.create(
+        response = self.openai_service.chat(
             model=MODEL,
             messages=[
                 # Construct a system message including:
@@ -117,12 +104,12 @@ class RAGKnowledgePromptAgent:
     and leverages embeddings to respond to prompts based solely on retrieved information.
     """
 
-    def __init__(self, openai_api_key, persona, chunk_size=2000, chunk_overlap=100):
+    def __init__(self, openai_service: OpenAIService, persona, chunk_size=2000, chunk_overlap=100):
         """
         Initializes the RAGKnowledgePromptAgent with API credentials and configuration settings.
 
         Parameters:
-        openai_api_key (str): API key for accessing OpenAI.
+        openai_service (OpenAIService): Service for accessing OpenAI.
         persona (str): Persona description for the agent.
         chunk_size (int): The size of text chunks for embedding. Defaults to 2000.
         chunk_overlap (int): Overlap between consecutive chunks. Defaults to 100.
@@ -130,7 +117,7 @@ class RAGKnowledgePromptAgent:
         self.persona = persona
         self.chunk_size = chunk_size
         self.chunk_overlap = chunk_overlap
-        self.openai_api_key = openai_api_key
+        self.openai_service = openai_service
         self.unique_filename = f"{datetime.now().strftime('%Y%m%d_%H%M%S')}_{uuid.uuid4().hex[:8]}.csv"
 
     def get_embedding(self, text):
@@ -143,8 +130,7 @@ class RAGKnowledgePromptAgent:
         Returns:
         list: The embedding vector.
         """
-        client = OpenAI(base_url="https://openai.vocareum.com/v1", api_key=self.openai_api_key)
-        response = client.embeddings.create(
+        response = self.openai_service.embed(
             model="text-embedding-3-large",
             input=text,
             encoding_format="float"
@@ -254,8 +240,7 @@ class RAGKnowledgePromptAgent:
 
         best_chunk = df.loc[df['similarity'].idxmax(), 'text']
 
-        client = OpenAI(base_url="https://openai.vocareum.com/v1", api_key=self.openai_api_key)
-        response = client.chat.completions.create(
+        response = self.openai_service.chat(
             model=MODEL,
             messages=[
                 {"role": "system", "content": f"Forget previous context. You are {self.persona}, a knowledge-based assistant."},
@@ -267,11 +252,10 @@ class RAGKnowledgePromptAgent:
         return response.choices[0].message.content
 
 class EvaluationAgent:
-    
-    def __init__(self, openai_api_key, persona, evaluation_criteria, worker_agent, max_interactions=10):
-        # Initialize the EvaluationAgent with given attributes.
-        # Declare class attributes here
-        self.openai_api_key = openai_api_key
+
+    def __init__(self, openai_service: OpenAIService, persona, evaluation_criteria, worker_agent, max_interactions=10):
+        """Initialize the EvaluationAgent with the shared OpenAI service."""
+        self.openai_service = openai_service
         self.persona = persona
         self.evaluation_criteria = evaluation_criteria
         self.worker_agent = worker_agent
@@ -279,10 +263,6 @@ class EvaluationAgent:
 
     def evaluate(self, initial_prompt):
         # This method manages interactions between agents to achieve a solution.
-        client = OpenAI(
-            api_key=self.openai_api_key,
-            base_url="https://openai.vocareum.com/v1"
-        )
         prompt_to_evaluate = initial_prompt
         
         # Set loop to iterate up to the maximum number of interactions:
@@ -301,7 +281,7 @@ class EvaluationAgent:
                 f"Meet this criteria: {self.evaluation_criteria}"
                 f"Respond Yes or No, and the reason why it does or doesn't meet the criteria."
             )
-            response = client.chat.completions.create(
+            response = self.openai_service.chat(
                 model=MODEL,
                 # Define the message structure sent to the LLM for evaluation (use temperature=0)
                 messages=[
@@ -331,7 +311,7 @@ class EvaluationAgent:
                 instruction_prompt = (
                     f"Provide instructions to fix an answer based on these reasons why it is incorrect: {evaluation}"
                 )
-                response = client.chat.completions.create(
+                response = self.openai_service.chat(
                     model=MODEL,
                     # Define the message structure sent to the LLM to generate correction instructions (use temperature=0)
                     messages = [
@@ -374,19 +354,15 @@ class EvaluationAgent:
 
 class RoutingAgent():
 
-    def __init__(self, openai_api_key, agents):
-        # Initialize the agent with given attributes
-        self.openai_api_key = openai_api_key
+    def __init__(self, openai_service: OpenAIService, agents):
+        """Initialize the routing agent with the shared OpenAI service."""
+        self.openai_service = openai_service
         # Define an attribute to hold the agents, call it agents
         self.agents = agents
 
     def get_embedding(self, text):
-        client = OpenAI(
-            api_key=self.openai_api_key,
-            base_url="https://openai.vocareum.com/v1"
-        )
         # Write code to calculate the embedding of the text using the text-embedding-3-large model
-        response = client.embeddings.create(
+        response = self.openai_service.embed(
             model="text-embedding-3-large",
             input=text,
             encoding_format="float"
@@ -433,22 +409,17 @@ class RoutingAgent():
 
 class ActionPlanningAgent:
 
-    def __init__(self, openai_api_key, knowledge):
-        self.openai_api_key = openai_api_key
+    def __init__(self, openai_service: OpenAIService, knowledge):
+        self.openai_service = openai_service
         self.knowledge = knowledge
 
     def extract_steps_from_prompt(self, prompt):
 
-        # Instantiate the OpenAI client using the provided API key
-        client = OpenAI(
-            api_key=self.openai_api_key,
-            base_url="https://openai.vocareum.com/v1"
-        )
         # Call the OpenAI API to get a response from the "gpt-3.5-turbo" model.
         # Provide the following system prompt along with the user's prompt:
         # "You are an action planning agent. Using your knowledge, you extract from the user prompt the steps requested to complete the action the user is asking for. You return the steps as a list. Only return the steps in your knowledge. Forget any previous context. This is your knowledge: {pass the knowledge here}"
         # Note: Dude, if you integrate the phrase: "Forget any previous context" at the end of the system message or in between, it will immediately forget your knowledge and your prompt ;-)        
-        response = client.chat.completions.create(
+        response = self.openai_service.chat(
             model=MODEL,
             messages=[
                 # Provide the system prompt to instruct the agent on its role

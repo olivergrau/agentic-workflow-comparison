@@ -2,6 +2,7 @@
 
 # Import the following agents: ActionPlanningAgent, KnowledgeAugmentedPromptAgent, EvaluationAgent, RoutingAgent from the workflow_agents.base_agents module
 from agents.base_agents import ActionPlanningAgent, KnowledgeAugmentedPromptAgent, EvaluationAgent, RoutingAgent
+from agents.openai_service import OpenAIService
 
 import os
 from dotenv import load_dotenv
@@ -9,6 +10,9 @@ from dotenv import load_dotenv
 # Load the OpenAI key into a variable called openai_api_key
 load_dotenv()  # Load environment variables from .env file
 openai_api_key = os.getenv("OPENAI_API_KEY")
+
+# Create a single OpenAIService instance to share across agents
+openai_service = OpenAIService(api_key=openai_api_key)
 
 # load the product spec
 # Load the product spec document Product-Spec-Email-Router.txt into a variable called product_spec
@@ -33,9 +37,9 @@ knowledge_action_planning = (
     "A development Plan for a product contains all these components"
 )
 # Instantiate an action_planning_agent using the 'knowledge_action_planning'
-action_planning_agent = ActionPlanningAgent(    
+action_planning_agent = ActionPlanningAgent(
     knowledge=knowledge_action_planning,
-    openai_api_key=openai_api_key
+    openai_service=openai_service
 )
 
 # Product Manager - Knowledge Augmented Prompt Agent
@@ -47,10 +51,10 @@ knowledge_product_manager = (
     f"Here is the product spec: {product_spec}"
 )
 # Instantiate a product_manager_knowledge_agent using 'persona_product_manager' and the completed 'knowledge_product_manager'
-product_manager_knowledge_agent = KnowledgeAugmentedPromptAgent(    
+product_manager_knowledge_agent = KnowledgeAugmentedPromptAgent(
     persona=persona_product_manager,
     knowledge=knowledge_product_manager,
-    openai_api_key=openai_api_key
+    openai_service=openai_service
 )
 
 # Product Manager - Evaluation Agent
@@ -63,21 +67,21 @@ evaluation_criteria_product_manager = (
     "Each user story should be clear, concise, and focused on a specific user need. "
     "The user stories should be relevant to the product spec provided."
 )
-product_manager_evaluation_agent = EvaluationAgent(    
+product_manager_evaluation_agent = EvaluationAgent(
     persona=persona_product_manager_eval,
     evaluation_criteria=evaluation_criteria_product_manager,
     worker_agent=product_manager_knowledge_agent,
-    openai_api_key=openai_api_key
-) 
+    openai_service=openai_service
+)
 
 # Program Manager - Knowledge Augmented Prompt Agent
 persona_program_manager = "You are a Program Manager, you are responsible for defining the features for a product."
 knowledge_program_manager = "Features of a product are defined by organizing similar user stories into cohesive groups."
 # Instantiate a program_manager_knowledge_agent using 'persona_program_manager' and 'knowledge_program_manager'
-program_manager_knowledge_agent = KnowledgeAugmentedPromptAgent(    
+program_manager_knowledge_agent = KnowledgeAugmentedPromptAgent(
     persona=persona_program_manager,
     knowledge=knowledge_program_manager,
-    openai_api_key=openai_api_key
+    openai_service=openai_service
 )
 
 # Program Manager - Evaluation Agent
@@ -90,7 +94,7 @@ persona_program_manager_eval = "You are an evaluation agent that checks the answ
 #                      "Key Functionality: The specific capabilities or actions the feature provides\n" \
 #                      "User Benefit: How this feature creates value for the user"
 # For the 'agent_to_evaluate' parameter, refer to the provided solution code's pattern.
-program_manager_evaluation_agent = EvaluationAgent(    
+program_manager_evaluation_agent = EvaluationAgent(
     persona=persona_program_manager_eval,
     evaluation_criteria=(
         "The answer should be product features that follow the following structure: "
@@ -100,17 +104,17 @@ program_manager_evaluation_agent = EvaluationAgent(
         "User Benefit: How this feature creates value for the user"
     ),
     worker_agent=program_manager_knowledge_agent,
-    openai_api_key=openai_api_key
+    openai_service=openai_service
 )
 
 # Development Engineer - Knowledge Augmented Prompt Agent
 persona_dev_engineer = "You are a Development Engineer, you are responsible for defining the development tasks for a product."
 knowledge_dev_engineer = "Development tasks are defined by identifying what needs to be built to implement each user story."
 # Instantiate a development_engineer_knowledge_agent using 'persona_dev_engineer' and 'knowledge_dev_engineer'
-development_engineer_knowledge_agent = KnowledgeAugmentedPromptAgent(    
+development_engineer_knowledge_agent = KnowledgeAugmentedPromptAgent(
     persona=persona_dev_engineer,
     knowledge=knowledge_dev_engineer,
-    openai_api_key=openai_api_key
+    openai_service=openai_service
 )
 
 # Development Engineer - Evaluation Agent
@@ -125,7 +129,7 @@ persona_dev_engineer_eval = "You are an evaluation agent that checks the answers
 #                      "Estimated Effort: Time or complexity estimation\n" \
 #                      "Dependencies: Any tasks that must be completed first"
 # For the 'agent_to_evaluate' parameter, refer to the provided solution code's pattern.
-development_engineer_evaluation_agent = EvaluationAgent(    
+development_engineer_evaluation_agent = EvaluationAgent(
     persona=persona_dev_engineer_eval,
     evaluation_criteria=(
         "The answer should be tasks following this exact structure: "
@@ -138,13 +142,13 @@ development_engineer_evaluation_agent = EvaluationAgent(
         "Dependencies: Any tasks that must be completed first"
     ),
     worker_agent=development_engineer_knowledge_agent,
-    openai_api_key=openai_api_key
+    openai_service=openai_service
 )
 
 
 # Routing Agent
 # Instantiate a routing_agent. You will need to define a list of agent dictionaries (routes) for Product Manager, Program Manager, and Development Engineer. Each dictionary should contain 'name', 'description', and 'func' (linking to a support function). Assign this list to the routing_agent's 'agents' attribute.
-routing_agent = RoutingAgent(    
+routing_agent = RoutingAgent(
     agents=[
         {
             "name": "Product Manager ",
@@ -162,7 +166,7 @@ routing_agent = RoutingAgent(
             "func": "placeholder"
         }
     ],
-    openai_api_key=openai_api_key
+    openai_service=openai_service
 )
 
 # Job function persona support functions

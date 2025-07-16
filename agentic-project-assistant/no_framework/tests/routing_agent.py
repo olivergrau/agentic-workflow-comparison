@@ -4,11 +4,13 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")
 
 from dotenv import load_dotenv
 from agents.base_agents import KnowledgeAugmentedPromptAgent, RoutingAgent
+from agents.openai_service import OpenAIService
 
 # Load environment variables from .env file
 load_dotenv()
 
 openai_api_key = os.getenv("OPENAI_API_KEY")
+openai_service = OpenAIService(api_key=openai_api_key)
 
 persona = "You are a college professor"
 
@@ -16,22 +18,22 @@ knowledge = "You know everything about Texas"
 # Define the Texas Knowledge Augmented Prompt Agent
 
 texas_agent = KnowledgeAugmentedPromptAgent(
-    openai_api_key=openai_api_key, persona=persona, knowledge=knowledge)
+    openai_service=openai_service, persona=persona, knowledge=knowledge)
 
 knowledge = "You know everything about Europe"
 
 # Define the Europe Knowledge Augmented Prompt Agent
 europe_agent = KnowledgeAugmentedPromptAgent(
-    openai_api_key=openai_api_key, persona=persona, knowledge=knowledge)
+    openai_service=openai_service, persona=persona, knowledge=knowledge)
 
 persona = "You are a college math professor"
 knowledge = "You know everything about math, you take prompts with numbers, extract math formulas, and show the answer without explanation"
 
 # Define the Math Knowledge Augmented Prompt Agent
 math_agent = KnowledgeAugmentedPromptAgent(
-    openai_api_key=openai_api_key, persona=persona, knowledge=knowledge)
+    openai_service=openai_service, persona=persona, knowledge=knowledge)
 
-routing_agent = RoutingAgent(openai_api_key=openai_api_key,
+routing_agent = RoutingAgent(openai_service=openai_service,
     agents = [
         {
             "name": "texas agent",

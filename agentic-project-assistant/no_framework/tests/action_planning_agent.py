@@ -3,11 +3,13 @@ import os
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
 from agents.base_agents import ActionPlanningAgent
+from agents.openai_service import OpenAIService
 from dotenv import load_dotenv
 
 # Load environment variables and define the openai_api_key variable with your OpenAI API key
 load_dotenv()
 openai_api_key = os.getenv("OPENAI_API_KEY")
+openai_service = OpenAIService(api_key=openai_api_key)
 
 knowledge = """
 # Fried Egg
@@ -39,7 +41,7 @@ knowledge = """
 
 # Instantiate the ActionPlanningAgent, passing the openai_api_key and the knowledge variable
 action_planning_agent = ActionPlanningAgent(
-    openai_api_key=openai_api_key,
+    openai_service=openai_service,
     knowledge=knowledge
 )
 
