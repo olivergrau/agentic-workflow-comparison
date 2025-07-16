@@ -1,13 +1,13 @@
 from .openai_service import OpenAIService
 import numpy as np
 import pandas as pd
-import re
-import csv
 import uuid
 from datetime import datetime
 from dataclasses import dataclass, field
 from typing import Callable, List
 from utils.logging_config import logger
+from utils.text_chunker import TextChunker
+from utils.embedding_store import EmbeddingStore
 
 from enum import Enum
 
@@ -126,7 +126,13 @@ class RAGKnowledgePromptAgent:
     """
 
     def __init__(
-        self, openai_service: OpenAIService, persona, chunk_size=2000, chunk_overlap=100
+        self,
+        openai_service: OpenAIService,
+        persona,
+        chunk_size=2000,
+        chunk_overlap=100,
+        chunker: TextChunker | None = None,
+        store: EmbeddingStore | None = None,
     ):
         """
         Initializes the RAGKnowledgePromptAgent with API credentials and configuration settings.
@@ -138,12 +144,12 @@ class RAGKnowledgePromptAgent:
         chunk_overlap (int): Overlap between consecutive chunks. Defaults to 100.
         """
         self.persona = persona
-        self.chunk_size = chunk_size
-        self.chunk_overlap = chunk_overlap
         self.openai_service = openai_service
-        self.unique_filename = (
-            f"{datetime.now().strftime('%Y%m%d_%H%M%S')}_{uuid.uuid4().hex[:8]}.csv"
+        self.chunker = chunker or TextChunker(
+            chunk_size=chunk_size, chunk_overlap=chunk_overlap
         )
+        filename = f"{datetime.now().strftime('%Y%m%d_%H%M%S')}_{uuid.uuid4().hex[:8]}"
+        self.store = store or EmbeddingStore(filename)
 
     def get_embedding(self, text):
         """
@@ -183,71 +189,16 @@ class RAGKnowledgePromptAgent:
     # I replaced it with a more robust chunking logic that respects natural breaks in the text
     # and ensures that chunks are created without overlap issues.
     def chunk_text(self, text):
-        """
-        Splits text into manageable chunks, attempting natural breaks.
-
-        Parameters:
-        text (str): Text to split into chunks.
-
-        Returns:
-        list: List of dictionaries containing chunk metadata.
-        """
-        text = re.sub(r"\s+", " ", text).strip()
-        separator = "\n"
-        chunk_size = self.chunk_size
-        chunk_overlap = self.chunk_overlap
-        step = chunk_size - chunk_overlap
-
-        chunks = []
-        start = 0
-        chunk_id = 0
-        text_len = len(text)
-
-        while start < text_len:
-            end = min(start + chunk_size, text_len)
-
-            # Try to find the last separator (e.g., '\n') within the chunk
-            window_text = text[start:end]
-            last_sep = window_text.rfind(separator)
-
-            if last_sep != -1 and (start + last_sep + len(separator)) < text_len:
-                end = start + last_sep + len(separator)
-
-            chunk_text = text[start:end]
-
-            chunks.append(
-                {
-                    "chunk_id": chunk_id,
-                    "text": chunk_text,
-                    "chunk_size": len(chunk_text),
-                    "start_char": start,
-                    "end_char": end,
-                }
-            )
-
-            start += step
-            chunk_id += 1
-
-        with open(
-            f"chunks-{self.unique_filename}", "w", newline="", encoding="utf-8"
-        ) as csvfile:
-            writer = csv.DictWriter(csvfile, fieldnames=["text", "chunk_size"])
-            writer.writeheader()
-            for chunk in chunks:
-                writer.writerow({k: chunk[k] for k in ["text", "chunk_size"]})
-
+        """Split text into chunks and store them using :class:`EmbeddingStore`."""
+        chunks = self.chunker.chunk(text)
+        self.store.save_chunks(chunks)
         return chunks
 
     def calculate_embeddings(self):
-        """
-        Calculates embeddings for each chunk and stores them in a CSV file.
-
-        Returns:
-        DataFrame: DataFrame containing text chunks and their embeddings.
-        """
-        df = pd.read_csv(f"chunks-{self.unique_filename}", encoding="utf-8")
+        """Calculate embeddings for stored chunks and persist them."""
+        df = self.store.load_chunks()
         df["embeddings"] = df["text"].apply(self.get_embedding)
-        df.to_csv(f"embeddings-{self.unique_filename}", encoding="utf-8", index=False)
+        self.store.save_embeddings(df)
         return df
 
     def find_prompt_in_knowledge(self, prompt):
@@ -261,8 +212,7 @@ class RAGKnowledgePromptAgent:
         str: Response derived from the most similar chunk in knowledge.
         """
         prompt_embedding = self.get_embedding(prompt)
-        df = pd.read_csv(f"embeddings-{self.unique_filename}", encoding="utf-8")
-        df["embeddings"] = df["embeddings"].apply(lambda x: np.array(eval(x)))
+        df = self.store.load_embeddings()
         df["similarity"] = df["embeddings"].apply(
             lambda emb: self.calculate_similarity(prompt_embedding, emb)
         )

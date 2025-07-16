@@ -3,6 +3,8 @@ import os
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
 from agents.base_agents import RAGKnowledgePromptAgent
+from utils.text_chunker import TextChunker
+from utils.embedding_store import EmbeddingStore
 from agents.openai_service import OpenAIService
 from config import load_openai_api_key, load_openai_base_url
 
@@ -16,8 +18,14 @@ chunk_size = 1000  # Define the size of each chunk
 persona = "You are a college professor, your answer always starts with: Dear students,"
 
 # Instantiate RAGKnowledgePromptAgent
+chunker = TextChunker(chunk_size=chunk_size)
+store = EmbeddingStore("test_rag")
 RAG_knowledge_prompt_agent = RAGKnowledgePromptAgent(
-    openai_service=openai_service, persona=persona, chunk_size=chunk_size)
+    openai_service=openai_service,
+    persona=persona,
+    chunker=chunker,
+    store=store,
+)
 
 knowledge_text = """
 In the historic city of Boston, Clara, a marine biologist and science communicator, began each morning analyzing sonar data to track whale migration patterns along the Atlantic coast.
