@@ -8,26 +8,28 @@ from utils.embedding_store import EmbeddingStore
 from agents.openai_service import OpenAIService
 from config import load_openai_api_key, load_openai_base_url
 
-# Load OpenAI credentials using the shared config helper
-openai_api_key = load_openai_api_key()
-openai_base_url = load_openai_base_url()
-openai_service = OpenAIService(api_key=openai_api_key, base_url=openai_base_url)
 
-chunk_size = 1000  # Define the size of each chunk
+def main() -> None:
+    """Demonstrate ``RAGKnowledgePromptAgent`` usage."""
+    openai_api_key = load_openai_api_key()
+    openai_base_url = load_openai_base_url()
+    openai_service = OpenAIService(
+        api_key=openai_api_key, base_url=openai_base_url
+    )
 
-persona = "You are a college professor, your answer always starts with: Dear students,"
+    chunk_size = 1000  # Define the size of each chunk
+    persona = "You are a college professor, your answer always starts with: Dear students,"
 
-# Instantiate RAGKnowledgePromptAgent
-chunker = TextChunker(chunk_size=chunk_size)
-store = EmbeddingStore("test_rag")
-RAG_knowledge_prompt_agent = RAGKnowledgePromptAgent(
-    openai_service=openai_service,
-    persona=persona,
-    chunker=chunker,
-    store=store,
-)
+    chunker = TextChunker(chunk_size=chunk_size)
+    store = EmbeddingStore("test_rag")
+    RAG_knowledge_prompt_agent = RAGKnowledgePromptAgent(
+        openai_service=openai_service,
+        persona=persona,
+        chunker=chunker,
+        store=store,
+    )
 
-knowledge_text = """
+    knowledge_text = """
 In the historic city of Boston, Clara, a marine biologist and science communicator, began each morning analyzing sonar data to track whale migration patterns along the Atlantic coast.
 She spent her afternoons in a university lab, researching CRISPR-based gene editing to restore coral reefs damaged by ocean acidification and warming.
 Clara was the daughter of Ukrainian immigrants—Olena and Mykola—who fled their homeland in the late 1980s after the Chernobyl disaster brought instability and fear to their quiet life near Kyiv.
@@ -58,21 +60,20 @@ To Clara, knowledge was a living system—retrieved from the past, generated in 
 Her life and work were testaments to the power of connecting across disciplines, borders, and generations—exactly the kind of story that RAG models were born to find.
 """
 
-# Compute the knowledge_text the chunk embbedings
-RAG_knowledge_prompt_agent.chunk_text(knowledge_text) # creates csv chunks
+    RAG_knowledge_prompt_agent.chunk_text(knowledge_text)
+    print("Knowledge text chunked and embeddings calculated.")
 
-print("Knowledge text chunked and embeddings calculated.")
+    RAG_knowledge_prompt_agent.calculate_embeddings()
+    print("Embeddings calculated for knowledge text chunks.")
 
-RAG_knowledge_prompt_agent.calculate_embeddings()
+    prompt = "What is the podcast that Clara hosts about?"
+    print(f"Prompt: {prompt}")
 
-print("Embeddings calculated for knowledge text chunks.")
+    rag_knowledge_agent_response = RAG_knowledge_prompt_agent.find_prompt_in_knowledge(prompt)
 
-prompt = "What is the podcast that Clara hosts about?"
+    print("Response from RAGKnowledgePromptAgent:")
+    print(rag_knowledge_agent_response)
 
-print(f"Prompt: {prompt}")
 
-# Print the prompt and the response
-rag_knowledge_agent_response = RAG_knowledge_prompt_agent.find_prompt_in_knowledge(prompt)
-
-print("Response from RAGKnowledgePromptAgent:")
-print(rag_knowledge_agent_response)
+if __name__ == "__main__":
+    main()
