@@ -5,16 +5,22 @@ import re
 import csv
 import uuid
 from datetime import datetime
+import logging
+
+logger = logging.getLogger(__name__)
 
 from enum import Enum
 
+
 class OpenAIModel(str, Enum):
     GPT_35_TURBO = "gpt-3.5-turbo"  # Default model for most tasks, good balance of cost and performance.
-    GPT_41 = "gpt-4.1"  # Strong default choice for development tasks, particularly those requiring speed, responsiveness, and general-purpose reasoning. 
+    GPT_41 = "gpt-4.1"  # Strong default choice for development tasks, particularly those requiring speed, responsiveness, and general-purpose reasoning.
     GPT_41_MINI = "gpt-4.1-mini"  # Fast and affordable, good for brainstorming, drafting, and tasks that don't require the full power of GPT-4.1.
     GPT_41_NANO = "gpt-4.1-nano"  # The fastest and cheapest model, suitable for lightweight tasks, high-frequency usage, and edge computing.
 
-MODEL = OpenAIModel.GPT_35_TURBO # Default model for this project
+
+MODEL = OpenAIModel.GPT_35_TURBO  # Default model for this project
+
 
 # DirectPromptAgent class definition
 class DirectPromptAgent:
@@ -30,12 +36,12 @@ class DirectPromptAgent:
             messages=[
                 {"role": "user", "content": prompt},
             ],
-            temperature=0
+            temperature=0,
         )
         # Return only the textual content of the response (not the full JSON response).
         return response.choices[0].message.content.strip()
 
-    
+
 # AugmentedPromptAgent class definition
 class AugmentedPromptAgent:
     def __init__(self, openai_service: OpenAIService, persona):
@@ -50,15 +56,19 @@ class AugmentedPromptAgent:
             model=MODEL,
             messages=[
                 # Add a system prompt instructing the agent to assume the defined persona and explicitly forget previous context.
-                {"role": "system", "content": f"Forget all previous context. You are {self.persona}."},
+                {
+                    "role": "system",
+                    "content": f"Forget all previous context. You are {self.persona}.",
+                },
                 # A funny side note: If you add the phrase: Forget all previous context at the end of the system message, it will immediately forget your persona ;-)
-                {"role": "user", "content": input_text}
+                {"role": "user", "content": input_text},
             ],
-            temperature=0
+            temperature=0,
         )
 
         # Return only the textual content of the response, not the full JSON payload.
         return response.choices[0].message.content.strip()
+
 
 # KnowledgeAugmentedPromptAgent class definition
 class KnowledgeAugmentedPromptAgent:
@@ -82,20 +92,21 @@ class KnowledgeAugmentedPromptAgent:
                 # - Final instruction:
                 #  "Answer the prompt based on this knowledge, not your own."
                 {
-                "role": "system",
-                "content": f"""\
+                    "role": "system",
+                    "content": f"""\
                     Forget all previous context.
                     You are {self.persona}, a knowledge-based assistant.
                     Use only the following knowledge to answer, do not use your own knowledge:
                     KNOWLEDGE: {self.knowledge} KNOWLEDGE END
-                    Answer the prompt based on this knowledge, not your own."""
+                    Answer the prompt based on this knowledge, not your own.""",
                 },
                 # Add the user's input prompt here as a user message.
-                {"role": "user", "content": input_text}
+                {"role": "user", "content": input_text},
             ],
-            temperature=0
+            temperature=0,
         )
         return response.choices[0].message.content
+
 
 # RAGKnowledgePromptAgent class definition
 class RAGKnowledgePromptAgent:
@@ -104,7 +115,9 @@ class RAGKnowledgePromptAgent:
     and leverages embeddings to respond to prompts based solely on retrieved information.
     """
 
-    def __init__(self, openai_service: OpenAIService, persona, chunk_size=2000, chunk_overlap=100):
+    def __init__(
+        self, openai_service: OpenAIService, persona, chunk_size=2000, chunk_overlap=100
+    ):
         """
         Initializes the RAGKnowledgePromptAgent with API credentials and configuration settings.
 
@@ -118,7 +131,9 @@ class RAGKnowledgePromptAgent:
         self.chunk_size = chunk_size
         self.chunk_overlap = chunk_overlap
         self.openai_service = openai_service
-        self.unique_filename = f"{datetime.now().strftime('%Y%m%d_%H%M%S')}_{uuid.uuid4().hex[:8]}.csv"
+        self.unique_filename = (
+            f"{datetime.now().strftime('%Y%m%d_%H%M%S')}_{uuid.uuid4().hex[:8]}.csv"
+        )
 
     def get_embedding(self, text):
         """
@@ -131,9 +146,7 @@ class RAGKnowledgePromptAgent:
         list: The embedding vector.
         """
         response = self.openai_service.embed(
-            model="text-embedding-3-large",
-            input=text,
-            encoding_format="float"
+            model="text-embedding-3-large", input=text, encoding_format="float"
         )
         return response.data[0].embedding
 
@@ -151,11 +164,11 @@ class RAGKnowledgePromptAgent:
         vec1, vec2 = np.array(vector_one), np.array(vector_two)
         return np.dot(vec1, vec2) / (np.linalg.norm(vec1) * np.linalg.norm(vec2))
 
-    # Remark: 
-    # I allowed myself to rewrite the chunk code because the original code was not working correctly 
+    # Remark:
+    # I allowed myself to rewrite the chunk code because the original code was not working correctly
     # and resulted in infinite loop. The logic was broken and the chunking was not done properly.
     #
-    # The culprit was this line: start = end - self.chunk_overlap. In combination with overlap, 
+    # The culprit was this line: start = end - self.chunk_overlap. In combination with overlap,
     # this caused the loop to never exit.
     # I replaced it with a more robust chunking logic that respects natural breaks in the text
     # and ensures that chunks are created without overlap issues.
@@ -169,7 +182,7 @@ class RAGKnowledgePromptAgent:
         Returns:
         list: List of dictionaries containing chunk metadata.
         """
-        text = re.sub(r'\s+', ' ', text).strip()
+        text = re.sub(r"\s+", " ", text).strip()
         separator = "\n"
         chunk_size = self.chunk_size
         chunk_overlap = self.chunk_overlap
@@ -192,18 +205,22 @@ class RAGKnowledgePromptAgent:
 
             chunk_text = text[start:end]
 
-            chunks.append({
-                "chunk_id": chunk_id,
-                "text": chunk_text,
-                "chunk_size": len(chunk_text),
-                "start_char": start,
-                "end_char": end
-            })
+            chunks.append(
+                {
+                    "chunk_id": chunk_id,
+                    "text": chunk_text,
+                    "chunk_size": len(chunk_text),
+                    "start_char": start,
+                    "end_char": end,
+                }
+            )
 
             start += step
             chunk_id += 1
 
-        with open(f"chunks-{self.unique_filename}", 'w', newline='', encoding='utf-8') as csvfile:
+        with open(
+            f"chunks-{self.unique_filename}", "w", newline="", encoding="utf-8"
+        ) as csvfile:
             writer = csv.DictWriter(csvfile, fieldnames=["text", "chunk_size"])
             writer.writeheader()
             for chunk in chunks:
@@ -218,9 +235,9 @@ class RAGKnowledgePromptAgent:
         Returns:
         DataFrame: DataFrame containing text chunks and their embeddings.
         """
-        df = pd.read_csv(f"chunks-{self.unique_filename}", encoding='utf-8')
-        df['embeddings'] = df['text'].apply(self.get_embedding)
-        df.to_csv(f"embeddings-{self.unique_filename}", encoding='utf-8', index=False)
+        df = pd.read_csv(f"chunks-{self.unique_filename}", encoding="utf-8")
+        df["embeddings"] = df["text"].apply(self.get_embedding)
+        df.to_csv(f"embeddings-{self.unique_filename}", encoding="utf-8", index=False)
         return df
 
     def find_prompt_in_knowledge(self, prompt):
@@ -234,26 +251,42 @@ class RAGKnowledgePromptAgent:
         str: Response derived from the most similar chunk in knowledge.
         """
         prompt_embedding = self.get_embedding(prompt)
-        df = pd.read_csv(f"embeddings-{self.unique_filename}", encoding='utf-8')
-        df['embeddings'] = df['embeddings'].apply(lambda x: np.array(eval(x)))
-        df['similarity'] = df['embeddings'].apply(lambda emb: self.calculate_similarity(prompt_embedding, emb))
+        df = pd.read_csv(f"embeddings-{self.unique_filename}", encoding="utf-8")
+        df["embeddings"] = df["embeddings"].apply(lambda x: np.array(eval(x)))
+        df["similarity"] = df["embeddings"].apply(
+            lambda emb: self.calculate_similarity(prompt_embedding, emb)
+        )
 
-        best_chunk = df.loc[df['similarity'].idxmax(), 'text']
+        best_chunk = df.loc[df["similarity"].idxmax(), "text"]
 
         response = self.openai_service.chat(
             model=MODEL,
             messages=[
-                {"role": "system", "content": f"Forget previous context. You are {self.persona}, a knowledge-based assistant."},
-                {"role": "user", "content": f"Answer based only on this information: {best_chunk}. Prompt: {prompt}"}
+                {
+                    "role": "system",
+                    "content": f"Forget previous context. You are {self.persona}, a knowledge-based assistant.",
+                },
+                {
+                    "role": "user",
+                    "content": f"Answer based only on this information: {best_chunk}. Prompt: {prompt}",
+                },
             ],
-            temperature=0
+            temperature=0,
         )
 
         return response.choices[0].message.content
 
+
 class EvaluationAgent:
 
-    def __init__(self, openai_service: OpenAIService, persona, evaluation_criteria, worker_agent, max_interactions=10):
+    def __init__(
+        self,
+        openai_service: OpenAIService,
+        persona,
+        evaluation_criteria,
+        worker_agent,
+        max_interactions=10,
+    ):
         """Initialize the EvaluationAgent with the shared OpenAI service."""
         self.openai_service = openai_service
         self.persona = persona
@@ -261,32 +294,23 @@ class EvaluationAgent:
         self.worker_agent = worker_agent
         self.max_interactions = max_interactions
 
-    def evaluate(self, initial_prompt):
-        # This method manages interactions between agents to achieve a solution.
-        prompt_to_evaluate = initial_prompt
-        
-        # Set loop to iterate up to the maximum number of interactions:
-        for i in range(0, self.max_interactions): 
-            print(f"\n--- Interaction {i+1} ---")
+    def evaluate_once(self, prompt: str):
+        """Run a single evaluation iteration."""
+        logger.info("Worker agent generating response")
+        response_from_worker = self.worker_agent.respond(prompt)
 
-            print(" Step 1: Worker agent generates a response to the prompt")
-            print(f"Prompt:\n{prompt_to_evaluate}")
-            # Obtain a response from the worker agent
-            response_from_worker = self.worker_agent.respond(prompt_to_evaluate)
-            print(f"Worker Agent Response:\n{response_from_worker}")
-
-            print(" Step 2: Evaluator agent judges the response")
-            eval_prompt = (
-                f"Does the following answer: {response_from_worker}\n"
-                f"Meet this criteria: {self.evaluation_criteria}"
-                f"Respond Yes or No, and the reason why it does or doesn't meet the criteria."
-            )
-            response = self.openai_service.chat(
-                model=MODEL,
-                # Define the message structure sent to the LLM for evaluation (use temperature=0)
-                messages=[
-                    {"role": "system", 
-                     "content": (
+        logger.info("Evaluator agent judging response")
+        eval_prompt = (
+            f"Does the following answer: {response_from_worker}\n"
+            f"Meet this criteria: {self.evaluation_criteria}"
+            f"Respond Yes or No, and the reason why it does or doesn't meet the criteria."
+        )
+        response = self.openai_service.chat(
+            model=MODEL,
+            messages=[
+                {
+                    "role": "system",
+                    "content": (
                         f"You are {self.persona}, an impartial evaluation agent.\n"
                         f"You must decide if the following answer meets the evaluation criterion:\n"
                         f"CRITERION: {self.evaluation_criteria}\n"
@@ -294,65 +318,72 @@ class EvaluationAgent:
                         f"First line: 'Yes' or 'No'\n"
                         f"Second line: A one-sentence explanation why.\n"
                         f"Do not suggest improvements. Do not change or reinterpret the criterion."
-                    )},
-                    {"role": "user", "content": f"Answer: {response_from_worker}"}
-                ],
-                temperature=0
-            )
-            evaluation = response.choices[0].message.content.strip()
-            print(f"Evaluator Agent Evaluation:\n{evaluation}")
+                    ),
+                },
+                {"role": "user", "content": f"Answer: {response_from_worker}"},
+            ],
+            temperature=0,
+        )
+        evaluation = response.choices[0].message.content.strip()
+        return response_from_worker, evaluation
 
-            print(" Step 3: Check if evaluation is positive")
+    def iterate(self, initial_prompt: str):
+        """Run evaluation loop until criteria are met or max interactions reached."""
+        prompt_to_evaluate = initial_prompt
+
+        for i in range(self.max_interactions):
+            logger.info("--- Interaction %d ---", i + 1)
+            worker_response, evaluation = self.evaluate_once(prompt_to_evaluate)
+
             if evaluation.lower().startswith("yes"):
-                print("✅ Final solution accepted.")
+                logger.info("Final solution accepted")
                 break
-            else:
-                print(" Step 4: Generate instructions to correct the response")
-                instruction_prompt = (
-                    f"Provide instructions to fix an answer based on these reasons why it is incorrect: {evaluation}"
-                )
-                response = self.openai_service.chat(
-                    model=MODEL,
-                    # Define the message structure sent to the LLM to generate correction instructions (use temperature=0)
-                    messages = [
-                        {
-                            "role": "system",
-                            "content": (
-                                f"You are {self.persona}, a helpful assistant that generates concise correction instructions.\n"
-                                f"Based on the evaluation feedback, your job is to guide the worker on how to fix the answer.\n"
-                                f"{instruction_prompt}\n"
-                                f"Do not change the prompt or invent new constraints. Just explain how to better meet the criterion."
-                            )
-                        },
-                        {
-                            "role": "user",
-                            "content": (
-                                f"The original answer was judged incorrect.\n"
-                                f"Evaluation feedback: {evaluation}\n"
-                                f"Write clear instructions for improving the answer to meet the criterion."
-                            )
-                        }
-                    ],
-                    temperature=0  
-                )
-                instructions = response.choices[0].message.content.strip()
-                print(f"Instructions to fix:\n{instructions}")
 
-                print(" Step 5: Send feedback to worker agent for refinement")
-                prompt_to_evaluate = (
-                    f"The original prompt was: {initial_prompt}\n"
-                    f"The response to that prompt was: {response_from_worker}\n"
-                    f"It has been evaluated as incorrect.\n"
-                    f"Make only these corrections, do not alter content validity: {instructions}"
-                )
+            logger.info("Generating instructions to improve answer")
+            instruction_prompt = f"Provide instructions to fix an answer based on these reasons why it is incorrect: {evaluation}"
+            response = self.openai_service.chat(
+                model=MODEL,
+                messages=[
+                    {
+                        "role": "system",
+                        "content": (
+                            f"You are {self.persona}, a helpful assistant that generates concise correction instructions.\n"
+                            f"Based on the evaluation feedback, your job is to guide the worker on how to fix the answer.\n"
+                            f"{instruction_prompt}\n"
+                            f"Do not change the prompt or invent new constraints. Just explain how to better meet the criterion."
+                        ),
+                    },
+                    {
+                        "role": "user",
+                        "content": (
+                            f"The original answer was judged incorrect.\n"
+                            f"Evaluation feedback: {evaluation}\n"
+                            f"Write clear instructions for improving the answer to meet the criterion."
+                        ),
+                    },
+                ],
+                temperature=0,
+            )
+            instructions = response.choices[0].message.content.strip()
+            prompt_to_evaluate = (
+                f"The original prompt was: {initial_prompt}\n"
+                f"The response to that prompt was: {worker_response}\n"
+                f"It has been evaluated as incorrect.\n"
+                f"Make only these corrections, do not alter content validity: {instructions}"
+            )
+
         return {
-            # Return a dictionary containing the final response, evaluation, and number of iterations           
-            "final_response": response_from_worker,
+            "final_response": worker_response,
             "evaluation": evaluation,
-            "iterations": i + 1         
-        }   
+            "iterations": i + 1,
+        }
 
-class RoutingAgent():
+    def evaluate(self, initial_prompt: str):
+        """Backward compatible wrapper around :py:meth:`iterate`."""
+        return self.iterate(initial_prompt)
+
+
+class RoutingAgent:
 
     def __init__(self, openai_service: OpenAIService, agents):
         """Initialize the routing agent with the shared OpenAI service."""
@@ -363,17 +394,15 @@ class RoutingAgent():
     def get_embedding(self, text):
         # Write code to calculate the embedding of the text using the text-embedding-3-large model
         response = self.openai_service.embed(
-            model="text-embedding-3-large",
-            input=text,
-            encoding_format="float"
+            model="text-embedding-3-large", input=text, encoding_format="float"
         )
         # Extract and return the embedding vector from the response
         embedding = response.data[0].embedding
-        return embedding 
+        return embedding
 
     # Define a method to route user prompts to the appropriate agent
     def route(self, user_input):
-        """        Routes the user input to the most suitable agent based on similarity of descriptions.
+        """Routes the user input to the most suitable agent based on similarity of descriptions.
         Args:
             user_input (str): The input prompt from the user.
         Returns:
@@ -392,7 +421,9 @@ class RoutingAgent():
                 print(f"Warning: Agent '{agent['name']}' has no embedding. Skipping.")
                 continue
 
-            similarity = np.dot(input_emb, agent_emb) / (np.linalg.norm(input_emb) * np.linalg.norm(agent_emb))
+            similarity = np.dot(input_emb, agent_emb) / (
+                np.linalg.norm(input_emb) * np.linalg.norm(agent_emb)
+            )
             print(similarity)
 
             # Add logic to select the best agent based on the similarity score between the user prompt and the agent descriptions
@@ -418,12 +449,14 @@ class ActionPlanningAgent:
         # Call the OpenAI API to get a response from the "gpt-3.5-turbo" model.
         # Provide the following system prompt along with the user's prompt:
         # "You are an action planning agent. Using your knowledge, you extract from the user prompt the steps requested to complete the action the user is asking for. You return the steps as a list. Only return the steps in your knowledge. Forget any previous context. This is your knowledge: {pass the knowledge here}"
-        # Note: Dude, if you integrate the phrase: "Forget any previous context" at the end of the system message or in between, it will immediately forget your knowledge and your prompt ;-)        
+        # Note: Dude, if you integrate the phrase: "Forget any previous context" at the end of the system message or in between, it will immediately forget your knowledge and your prompt ;-)
         response = self.openai_service.chat(
             model=MODEL,
             messages=[
                 # Provide the system prompt to instruct the agent on its role
-                {"role": "system", "content": f"""
+                {
+                    "role": "system",
+                    "content": f"""
                                 You are an action planning agent tasked with creating a clear, ordered sequence of instructions for completing a product development task.
 
 Your output must:
@@ -442,18 +475,23 @@ Each item in the list must be a full, standalone directive.
                  
 Use this knowledge: {self.knowledge}
                 
-"""},
+""",
+                },
                 # Add the user's prompt as a user message
-                {"role": "user", "content": prompt}
+                {"role": "user", "content": prompt},
             ],
-            temperature=0
+            temperature=0,
         )
-        
+
         # Extract the response text from the OpenAI API response
-        response_text = response.choices[0].message.content.strip()  
+        response_text = response.choices[0].message.content.strip()
 
         # Clean and format the extracted steps by removing empty lines and unwanted text
         steps = response_text.split("\n")
-        steps = [step.strip() for step in steps if step.strip() and not step.startswith("Step")]
-        
+        steps = [
+            step.strip()
+            for step in steps
+            if step.strip() and not step.startswith("Step")
+        ]
+
         return steps
