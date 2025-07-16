@@ -3,7 +3,7 @@ import os
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
 # Import agents and config helpers
-from agents.base_agents import ActionPlanningAgent
+from agents.action_planning_agent import ActionPlanningAgent
 from agents.openai_service import OpenAIService
 from config import load_openai_api_key, load_openai_base_url
 

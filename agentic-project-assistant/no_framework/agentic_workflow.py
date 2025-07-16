@@ -1,7 +1,7 @@
 # agentic_workflow.py
 
 # Import the following agents: ActionPlanningAgent, KnowledgeAugmentedPromptAgent, EvaluationAgent, RoutingAgent from the workflow_agents.base_agents module
-from agents.base_agents import (
+from agents import (
     ActionPlanningAgent,
     KnowledgeAugmentedPromptAgent,
     EvaluationAgent,

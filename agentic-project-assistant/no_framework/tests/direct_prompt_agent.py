@@ -4,7 +4,7 @@ import os
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
 
-from agents.base_agents import DirectPromptAgent
+from agents.direct_prompt_agent import DirectPromptAgent
 from agents.openai_service import OpenAIService
 from config import load_openai_api_key, load_openai_base_url
 
