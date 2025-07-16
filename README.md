@@ -22,3 +22,12 @@ base_url = load_openai_base_url()
 ```
 
 All modules and tests in this repo import these functions instead of calling `load_dotenv()` directly.
+
+## Workflows
+
+The `agentic-project-assistant` directory contains multiple implementations of the workflow:
+
+- `no_framework` – simple Python implementation using the OpenAI SDK.
+- `langchain` – equivalent workflow built with LangChain components.
+
+Each folder provides an `agentic_workflow.py` entry point demonstrating the approach.

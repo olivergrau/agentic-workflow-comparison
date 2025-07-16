@@ -1,0 +1,98 @@
+
+========================================
+Running: action_planning_agent.py
+========================================
+Traceback (most recent call last):
+  File "/workspace/agentic-workflow-comparison/agentic-project-assistant/langchain/tests/./action_planning_agent.py", line 6, in <module>
+    from agents.action_planning_agent import ActionPlanningAgent
+  File "/workspace/agentic-workflow-comparison/agentic-project-assistant/langchain/agents/__init__.py", line 1, in <module>
+    from .base import BasicAgent, Route, MODEL, OpenAIModel
+  File "/workspace/agentic-workflow-comparison/agentic-project-assistant/langchain/agents/base.py", line 8, in <module>
+    from .openai_service import OpenAIService
+  File "/workspace/agentic-workflow-comparison/agentic-project-assistant/langchain/agents/openai_service.py", line 7, in <module>
+    from langchain_openai import ChatOpenAI, OpenAIEmbeddings
+ModuleNotFoundError: No module named 'langchain_openai'
+
+========================================
+Running: augmented_prompt_agent.py
+========================================
+Traceback (most recent call last):
+  File "/workspace/agentic-workflow-comparison/agentic-project-assistant/langchain/tests/./augmented_prompt_agent.py", line 6, in <module>
+    from agents.augmented_prompt_agent import AugmentedPromptAgent
+  File "/workspace/agentic-workflow-comparison/agentic-project-assistant/langchain/agents/__init__.py", line 1, in <module>
+    from .base import BasicAgent, Route, MODEL, OpenAIModel
+  File "/workspace/agentic-workflow-comparison/agentic-project-assistant/langchain/agents/base.py", line 8, in <module>
+    from .openai_service import OpenAIService
+  File "/workspace/agentic-workflow-comparison/agentic-project-assistant/langchain/agents/openai_service.py", line 7, in <module>
+    from langchain_openai import ChatOpenAI, OpenAIEmbeddings
+ModuleNotFoundError: No module named 'langchain_openai'
+
+========================================
+Running: direct_prompt_agent.py
+========================================
+Traceback (most recent call last):
+  File "/workspace/agentic-workflow-comparison/agentic-project-assistant/langchain/tests/./direct_prompt_agent.py", line 7, in <module>
+    from agents.direct_prompt_agent import DirectPromptAgent
+  File "/workspace/agentic-workflow-comparison/agentic-project-assistant/langchain/agents/__init__.py", line 1, in <module>
+    from .base import BasicAgent, Route, MODEL, OpenAIModel
+  File "/workspace/agentic-workflow-comparison/agentic-project-assistant/langchain/agents/base.py", line 8, in <module>
+    from .openai_service import OpenAIService
+  File "/workspace/agentic-workflow-comparison/agentic-project-assistant/langchain/agents/openai_service.py", line 7, in <module>
+    from langchain_openai import ChatOpenAI, OpenAIEmbeddings
+ModuleNotFoundError: No module named 'langchain_openai'
+
+========================================
+Running: evaluation_agent.py
+========================================
+Traceback (most recent call last):
+  File "/workspace/agentic-workflow-comparison/agentic-project-assistant/langchain/tests/./evaluation_agent.py", line 6, in <module>
+    from agents.evaluation_agent import EvaluationAgent
+  File "/workspace/agentic-workflow-comparison/agentic-project-assistant/langchain/agents/__init__.py", line 1, in <module>
+    from .base import BasicAgent, Route, MODEL, OpenAIModel
+  File "/workspace/agentic-workflow-comparison/agentic-project-assistant/langchain/agents/base.py", line 8, in <module>
+    from .openai_service import OpenAIService
+  File "/workspace/agentic-workflow-comparison/agentic-project-assistant/langchain/agents/openai_service.py", line 7, in <module>
+    from langchain_openai import ChatOpenAI, OpenAIEmbeddings
+ModuleNotFoundError: No module named 'langchain_openai'
+
+========================================
+Running: knowledge_augmented_prompt_agent.py
+========================================
+Traceback (most recent call last):
+  File "/workspace/agentic-workflow-comparison/agentic-project-assistant/langchain/tests/./knowledge_augmented_prompt_agent.py", line 5, in <module>
+    from agents.knowledge_augmented_prompt_agent import KnowledgeAugmentedPromptAgent
+  File "/workspace/agentic-workflow-comparison/agentic-project-assistant/langchain/agents/__init__.py", line 1, in <module>
+    from .base import BasicAgent, Route, MODEL, OpenAIModel
+  File "/workspace/agentic-workflow-comparison/agentic-project-assistant/langchain/agents/base.py", line 8, in <module>
+    from .openai_service import OpenAIService
+  File "/workspace/agentic-workflow-comparison/agentic-project-assistant/langchain/agents/openai_service.py", line 7, in <module>
+    from langchain_openai import ChatOpenAI, OpenAIEmbeddings
+ModuleNotFoundError: No module named 'langchain_openai'
+
+========================================
+Running: rag_knowledge_prompt_agent.py
+========================================
+Traceback (most recent call last):
+  File "/workspace/agentic-workflow-comparison/agentic-project-assistant/langchain/tests/./rag_knowledge_prompt_agent.py", line 5, in <module>
+    from agents.rag_knowledge_prompt_agent import RAGKnowledgePromptAgent
+  File "/workspace/agentic-workflow-comparison/agentic-project-assistant/langchain/agents/__init__.py", line 1, in <module>
+    from .base import BasicAgent, Route, MODEL, OpenAIModel
+  File "/workspace/agentic-workflow-comparison/agentic-project-assistant/langchain/agents/base.py", line 8, in <module>
+    from .openai_service import OpenAIService
+  File "/workspace/agentic-workflow-comparison/agentic-project-assistant/langchain/agents/openai_service.py", line 7, in <module>
+    from langchain_openai import ChatOpenAI, OpenAIEmbeddings
+ModuleNotFoundError: No module named 'langchain_openai'
+
+========================================
+Running: routing_agent.py
+========================================
+Traceback (most recent call last):
+  File "/workspace/agentic-workflow-comparison/agentic-project-assistant/langchain/tests/./routing_agent.py", line 5, in <module>
+    from agents.knowledge_augmented_prompt_agent import KnowledgeAugmentedPromptAgent
+  File "/workspace/agentic-workflow-comparison/agentic-project-assistant/langchain/agents/__init__.py", line 1, in <module>
+    from .base import BasicAgent, Route, MODEL, OpenAIModel
+  File "/workspace/agentic-workflow-comparison/agentic-project-assistant/langchain/agents/base.py", line 8, in <module>
+    from .openai_service import OpenAIService
+  File "/workspace/agentic-workflow-comparison/agentic-project-assistant/langchain/agents/openai_service.py", line 7, in <module>
+    from langchain_openai import ChatOpenAI, OpenAIEmbeddings
+ModuleNotFoundError: No module named 'langchain_openai'
