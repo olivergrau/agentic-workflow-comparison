@@ -2,7 +2,7 @@ import sys
 import os
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
-from agents.base_agents import RAGKnowledgePromptAgent
+from agents.rag_knowledge_prompt_agent import RAGKnowledgePromptAgent
 from utils.text_chunker import TextChunker
 from utils.embedding_store import EmbeddingStore
 from agents.openai_service import OpenAIService

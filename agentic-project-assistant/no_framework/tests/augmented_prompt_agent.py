@@ -3,7 +3,7 @@ import os
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
 # Import the AugmentedPromptAgent class
-from agents.base_agents import AugmentedPromptAgent
+from agents.augmented_prompt_agent import AugmentedPromptAgent
 from agents.openai_service import OpenAIService
 from config import load_openai_api_key, load_openai_base_url
 

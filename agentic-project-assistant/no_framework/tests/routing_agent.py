@@ -2,7 +2,8 @@ import sys
 import os
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
-from agents.base_agents import KnowledgeAugmentedPromptAgent, RoutingAgent
+from agents.knowledge_augmented_prompt_agent import KnowledgeAugmentedPromptAgent
+from agents.routing_agent import RoutingAgent
 from agents.openai_service import OpenAIService
 from config import load_openai_api_key, load_openai_base_url
 
