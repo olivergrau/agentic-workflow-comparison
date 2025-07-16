@@ -4,12 +4,12 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")
 
 from agents.base_agents import ActionPlanningAgent
 from agents.openai_service import OpenAIService
-from dotenv import load_dotenv
+from config import load_openai_api_key, load_openai_base_url
 
-# Load environment variables and define the openai_api_key variable with your OpenAI API key
-load_dotenv()
-openai_api_key = os.getenv("OPENAI_API_KEY")
-openai_service = OpenAIService(api_key=openai_api_key)
+# Load OpenAI credentials using the shared config helper
+openai_api_key = load_openai_api_key()
+openai_base_url = load_openai_base_url()
+openai_service = OpenAIService(api_key=openai_api_key, base_url=openai_base_url)
 
 knowledge = """
 # Fried Egg
@@ -49,3 +49,4 @@ action_planning_agent = ActionPlanningAgent(
 prompt = "One morning I wanted to have scrambled eggs"
 response = action_planning_agent.extract_steps_from_prompt(prompt)
 print(f"Action Planning Response: {response}")
+

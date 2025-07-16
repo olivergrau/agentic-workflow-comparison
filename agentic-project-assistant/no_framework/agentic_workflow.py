@@ -9,16 +9,16 @@ from agents.base_agents import (
 )
 from agents.openai_service import OpenAIService
 from utils.logging_config import logger
-
+from config import load_openai_api_key, load_openai_base_url
 import os
-from dotenv import load_dotenv
 
-# Load the OpenAI key into a variable called openai_api_key
-load_dotenv()  # Load environment variables from .env file
-openai_api_key = os.getenv("OPENAI_API_KEY")
+
+# Load OpenAI credentials using the shared config helper
+openai_api_key = load_openai_api_key()
+openai_base_url = load_openai_base_url()
 
 # Create a single OpenAIService instance to share across agents
-openai_service = OpenAIService(api_key=openai_api_key)
+openai_service = OpenAIService(api_key=openai_api_key, base_url=openai_base_url)
 
 # load the product spec
 # Load the product spec document Product-Spec-Email-Router.txt into a variable called product_spec

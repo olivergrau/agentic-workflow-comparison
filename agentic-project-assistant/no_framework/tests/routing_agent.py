@@ -2,15 +2,14 @@ import sys
 import os
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
-from dotenv import load_dotenv
 from agents.base_agents import KnowledgeAugmentedPromptAgent, RoutingAgent
 from agents.openai_service import OpenAIService
+from config import load_openai_api_key, load_openai_base_url
 
-# Load environment variables from .env file
-load_dotenv()
-
-openai_api_key = os.getenv("OPENAI_API_KEY")
-openai_service = OpenAIService(api_key=openai_api_key)
+# Load OpenAI credentials using the shared config helper
+openai_api_key = load_openai_api_key()
+openai_base_url = load_openai_base_url()
+openai_service = OpenAIService(api_key=openai_api_key, base_url=openai_base_url)
 
 persona = "You are a college professor"
 
