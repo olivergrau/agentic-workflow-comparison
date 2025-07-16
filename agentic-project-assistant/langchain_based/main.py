@@ -1,16 +1,11 @@
 import os
-import sys
-
-# Allow importing from the no_framework package
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "no_framework")))
-
 from config import load_openai_api_key, load_openai_base_url
 from utils.logging_config import logger
 
-from langchain.chat_models import ChatOpenAI
-from langchain.embeddings import OpenAIEmbeddings
+from langchain_community.chat_models import ChatOpenAI
+from langchain_community.embeddings import OpenAIEmbeddings
 
-from .agents import (
+from agents import (
     ActionPlanningChain,
     KnowledgeAgent,
     EvaluationAgent,
@@ -188,8 +183,10 @@ def main() -> None:
 
     logger.info("Workflow completed successfully.")
     logger.info("\n*** Workflow Results ***")
+    
     for i, step in enumerate(completed_steps, start=1):
         logger.info("Step %d: %s", i, step)
+    
     logger.info("Final output of the workflow: %s", completed_steps[-1])
     logger.info("\n*** Workflow execution finished ***\n")
 
